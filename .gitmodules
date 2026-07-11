@@ -1,0 +1,3 @@
+[submodule "TransferChain-Contracts/lib\\openzeppelin-contracts"]
+	path = TransferChain-Contracts/lib\\openzeppelin-contracts
+	url = https://github.com/openzeppelin/openzeppelin-contracts
