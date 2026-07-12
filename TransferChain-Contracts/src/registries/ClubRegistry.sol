@@ -50,25 +50,25 @@ contract ClubRegistry is Ownable {
     /// @notice Registers a new club.
     /// @param owner_ The address that will own the club record.
     /// @param name_ The club name.
-    /// @param metadataURI_ The metadata URI.
+    /// @param metadataUri_ The metadata URI.
     /// @param country_ The club country.
     /// @param city_ The club city.
     /// @param league_ The league the club belongs to.
-    /// @param logoURI_ The logo URI.
+    /// @param logoUri_ The logo URI.
     /// @param website_ The club website.
     function registerClub(
         address owner_,
         string calldata name_,
-        string calldata metadataURI_,
+        string calldata metadataUri_,
         string calldata country_,
         string calldata city_,
         string calldata league_,
-        string calldata logoURI_,
+        string calldata logoUri_,
         string calldata website_
     ) external {
         if (owner_ == address(0)) revert InvalidAddress();
         if (owner_ != msg.sender) revert Unauthorized();
-        if (bytes(metadataURI_).length == 0) revert InvalidMetadataURI();
+        if (bytes(metadataUri_).length == 0) revert InvalidMetadataURI();
         if (registeredClubs[owner_]) revert ClubAlreadyRegistered();
 
         uint256 clubId = nextClubId;
@@ -78,11 +78,11 @@ contract ClubRegistry is Ownable {
         clubData.id = clubId;
         clubData.owner = owner_;
         clubData.name = name_;
-        clubData.metadataURI = metadataURI_;
+        clubData.metadataURI = metadataUri_;
         clubData.country = country_;
         clubData.city = city_;
         clubData.league = league_;
-        clubData.logoURI = logoURI_;
+        clubData.logoURI = logoUri_;
         clubData.website = website_;
         clubData.status = ClubStatus.Verified;
         clubData.registeredAt = block.timestamp;
@@ -95,14 +95,14 @@ contract ClubRegistry is Ownable {
 
     /// @notice Updates the metadata URI for an existing club.
     /// @param owner_ The club owner address.
-    /// @param metadataURI_ The new metadata URI.
-    function updateClubMetadata(address owner_, string calldata metadataURI_) external {
+    /// @param metadataUri_ The new metadata URI.
+    function updateClubMetadata(address owner_, string calldata metadataUri_) external {
         Club storage clubData = _requireClub(owner_);
         if (owner_ != msg.sender) revert Unauthorized();
-        if (bytes(metadataURI_).length == 0) revert InvalidMetadataURI();
+        if (bytes(metadataUri_).length == 0) revert InvalidMetadataURI();
 
-        clubData.metadataURI = metadataURI_;
-        emit ClubMetadataUpdated(owner_, clubData.id, metadataURI_);
+        clubData.metadataURI = metadataUri_;
+        emit ClubMetadataUpdated(owner_, clubData.id, metadataUri_);
     }
 
     /// @notice Updates the status of an existing club.

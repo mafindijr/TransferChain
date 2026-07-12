@@ -63,18 +63,18 @@ contract TransferMarketplace {
     /// @param playerId_ The player identifier.
     /// @param clubId_ The club identifier.
     /// @param price_ The listing price.
-    /// @param metadataURI_ Metadata URI for the listing.
+    /// @param metadataUri_ Metadata URI for the listing.
     function createListing(
         address seller_,
         uint256 playerId_,
         uint256 clubId_,
         uint256 price_,
-        string calldata metadataURI_
+        string calldata metadataUri_
     ) external {
         if (seller_ == address(0)) revert InvalidAddress();
         if (seller_ != msg.sender) revert Unauthorized();
         if (price_ == 0) revert InvalidPrice();
-        if (bytes(metadataURI_).length == 0) revert InvalidMetadataURI();
+        if (bytes(metadataUri_).length == 0) revert InvalidMetadataURI();
 
         uint256 listingId = nextListingId;
         nextListingId += 1;
@@ -85,7 +85,7 @@ contract TransferMarketplace {
             playerId: playerId_,
             clubId: clubId_,
             price: price_,
-            metadataURI: metadataURI_,
+            metadataURI: metadataUri_,
             status: ListingStatus.Active,
             createdAt: block.timestamp
         });

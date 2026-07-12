@@ -43,12 +43,12 @@ contract PlayerRegistry is Ownable {
 
     /// @notice Registers a new player profile.
     /// @param owner_ The wallet that owns the player identity.
-    /// @param metadataURI_ The IPFS or similar URI for the player metadata.
+    /// @param metadataUri_ The IPFS or similar URI for the player metadata.
     /// @param name_ The display name for the player.
-    function registerPlayer(address owner_, string calldata metadataURI_, string calldata name_) external {
+    function registerPlayer(address owner_, string calldata metadataUri_, string calldata name_) external {
         if (owner_ == address(0)) revert InvalidAddress();
         if (owner_ != msg.sender) revert Unauthorized();
-        if (bytes(metadataURI_).length == 0) revert InvalidMetadataURI();
+        if (bytes(metadataUri_).length == 0) revert InvalidMetadataURI();
         if (registeredPlayers[owner_]) revert PlayerAlreadyRegistered();
 
         uint256 playerId = nextPlayerId++;
@@ -56,26 +56,26 @@ contract PlayerRegistry is Ownable {
             id: playerId,
             owner: owner_,
             name: name_,
-            metadataURI: metadataURI_,
+            metadataURI: metadataUri_,
             status: PlayerStatus.Active,
             registeredAt: block.timestamp
         });
         playerById[playerId] = owner_;
         registeredPlayers[owner_] = true;
 
-        emit PlayerRegistered(owner_, playerId, metadataURI_);
+        emit PlayerRegistered(owner_, playerId, metadataUri_);
     }
 
     /// @notice Updates the metadata URI for an existing player.
     /// @param owner_ The wallet that owns the player identity.
-    /// @param metadataURI_ The new metadata URI.
-    function updatePlayerMetadata(address owner_, string calldata metadataURI_) external {
+    /// @param metadataUri_ The new metadata URI.
+    function updatePlayerMetadata(address owner_, string calldata metadataUri_) external {
         Player storage playerData = _requirePlayer(owner_);
         if (owner_ != msg.sender) revert Unauthorized();
-        if (bytes(metadataURI_).length == 0) revert InvalidMetadataURI();
+        if (bytes(metadataUri_).length == 0) revert InvalidMetadataURI();
 
-        playerData.metadataURI = metadataURI_;
-        emit PlayerMetadataUpdated(owner_, playerData.id, metadataURI_);
+        playerData.metadataURI = metadataUri_;
+        emit PlayerMetadataUpdated(owner_, playerData.id, metadataUri_);
     }
 
     /// @notice Updates the status of an existing player.

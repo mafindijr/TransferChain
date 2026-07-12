@@ -13,7 +13,7 @@ contract TransferChainConfigTest is Test {
         config = new TransferChainConfig(TREASURY, 250, 1);
     }
 
-    function testInitialization() public {
+    function testInitialization() public view {
         assertEq(config.treasury(), TREASURY);
         assertEq(config.marketplaceFeeBps(), 250);
         assertEq(config.protocolVersion(), 1);

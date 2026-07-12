@@ -68,11 +68,11 @@ contract TransferAgreementManager {
         uint256 installmentAmount_,
         uint256 appearanceBonus_,
         uint256 goalBonus_,
-        string calldata metadataURI_
+        string calldata metadataUri_
     ) external {
         if (buyer_ == address(0) || seller_ == address(0)) revert InvalidAddress();
         if (buyer_ != msg.sender) revert Unauthorized();
-        if (bytes(metadataURI_).length == 0) revert InvalidMetadataURI();
+        if (bytes(metadataUri_).length == 0) revert InvalidMetadataURI();
 
         uint256 agreementId = nextAgreementId;
         nextAgreementId += 1;
@@ -94,7 +94,7 @@ contract TransferAgreementManager {
                 medicalApprovalRequired: false,
                 negotiationDeadline: block.timestamp + 1 days,
                 agreementExpiration: block.timestamp + 7 days,
-                metadataURI: metadataURI_
+                metadataURI: metadataUri_
             }),
             buyerSigned: false,
             sellerSigned: false,
