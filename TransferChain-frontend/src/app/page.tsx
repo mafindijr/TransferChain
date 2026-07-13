@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 // Types corresponding to TransferChain Smart Contracts
 interface Club {
@@ -64,6 +64,53 @@ interface TxLog {
 }
 
 export default function Home() {
+  // World Cup Loader States
+  const [loading, setLoading] = useState(true);
+  const [fadeOut, setFadeOut] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingStep, setLoadingStep] = useState("Initializing TransferChain Protocol...");
+
+  useEffect(() => {
+    const steps = [
+      { prg: 0, text: "Initializing TransferChain Protocol..." },
+      { prg: 15, text: "Syncing Injective EVM Node..." },
+      { prg: 35, text: "Fetching World Cup Escrow smart contracts..." },
+      { prg: 55, text: "Decrypting Player tri-partite agreement hashes..." },
+      { prg: 75, text: "Verifying Verified Club Registry state..." },
+      { prg: 90, text: "Securing ledger endpoints..." },
+      { prg: 100, text: "Sync Complete! Access Granted." }
+    ];
+
+    let timer: NodeJS.Timeout;
+    const interval = setInterval(() => {
+      setLoadingProgress((prev) => {
+        const nextPrg = prev + Math.floor(Math.random() * 8) + 4;
+        if (nextPrg >= 100) {
+          clearInterval(interval);
+          setLoadingStep(steps[steps.length - 1].text);
+          timer = setTimeout(() => setFadeOut(true), 400);
+          setTimeout(() => setLoading(false), 1100); // 400ms delay + 700ms fadeOut transition
+          return 100;
+        }
+
+        const current = steps.find((s, idx) => {
+          const next = steps[idx + 1];
+          return nextPrg >= s.prg && (!next || nextPrg < next.prg);
+        });
+        if (current) {
+          setLoadingStep(current.text);
+        }
+
+        return nextPrg;
+      });
+    }, 60);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timer);
+    };
+  }, []);
+
   // Wallet Connection Simulation
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
@@ -559,11 +606,115 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[#151618] text-[#e0e0e0] font-sans selection:bg-[#dd1515] selection:text-white">
+    <div className="min-h-screen bg-[#f7f8fa] text-[#444444] font-sans selection:bg-[#dd1515] selection:text-white">
       
+      {/* World Cup Loader Overlay */}
+      {loading && (
+        <div className={`fixed inset-0 bg-[#08090a] z-[999999] flex flex-col items-center justify-center p-6 select-none transition-all duration-700 ${fadeOut ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+          {/* Abstract Background Lights */}
+          <div className="absolute top-1/4 left-1/4 w-80 h-80 rounded-full bg-[#dd1515]/5 blur-3xl animate-pulse-glow" />
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-amber-500/5 blur-3xl animate-gold-glow" />
+          
+          {/* Outer Container */}
+          <div className="relative flex flex-col items-center max-w-md w-full text-center space-y-8 animate-slide-up">
+            
+            {/* World Cup Trophy with Orbiting Ball */}
+            <div className="relative flex items-center justify-center w-52 h-52">
+              <svg className="w-36 h-36 text-amber-500 animate-gold-glow animate-float" viewBox="0 0 100 120" fill="currentColor">
+                <defs>
+                  <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#fbbf24" />
+                    <stop offset="50%" stopColor="#d97706" />
+                    <stop offset="100%" stopColor="#78350f" />
+                  </linearGradient>
+                  <radialGradient id="glow-grad" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
+                  </radialGradient>
+                </defs>
+
+                <circle cx="50" cy="55" r="40" fill="url(#glow-grad)" />
+
+                {/* Pedestal Base */}
+                <rect x="30" y="102" width="40" height="12" rx="2" fill="#1e293b" />
+                <rect x="33" y="95" width="34" height="7" fill="url(#gold-grad)" />
+                <path d="M 37,95 L 40,82 L 60,82 L 63,95 Z" fill="#0f172a" stroke="url(#gold-grad)" strokeWidth="1.5" />
+                
+                {/* Stem / Body */}
+                <path d="M 43,82 Q 50,75 42,50 Q 34,35 44,24 L 56,24 Q 66,35 58,50 Q 50,75 57,82 Z" fill="url(#gold-grad)" />
+                
+                {/* Supporting Figures wrapping the globe */}
+                <path d="M 39,52 Q 28,45 28,30 Q 28,15 40,20 Q 44,22 43,30 Q 36,28 36,38 Q 36,46 41,51 Z" fill="url(#gold-grad)" opacity="0.95" />
+                <path d="M 61,52 Q 72,45 72,30 Q 72,15 60,20 Q 56,22 57,30 Q 64,28 64,38 Q 64,46 59,51 Z" fill="url(#gold-grad)" opacity="0.95" />
+                
+                {/* The Globe */}
+                <circle cx="50" cy="24" r="13" fill="url(#gold-grad)" />
+                {/* Globe lines */}
+                <path d="M 37,24 A 13,13 0 0,0 63,24" fill="none" stroke="#78350f" strokeWidth="1" />
+                <path d="M 50,11 A 13,13 0 0,0 50,37" fill="none" stroke="#78350f" strokeWidth="1" />
+                <path d="M 40,16 Q 50,26 60,16" fill="none" stroke="#78350f" strokeWidth="0.8" />
+                <path d="M 40,32 Q 50,22 60,32" fill="none" stroke="#78350f" strokeWidth="0.8" />
+              </svg>
+
+              {/* Orbiting Soccer Ball */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="relative w-48 h-48">
+                  <svg className="absolute inset-0 w-full h-full text-amber-500/25 -rotate-12" viewBox="0 0 100 100">
+                    <ellipse cx="50" cy="50" rx="42" ry="14" fill="none" stroke="currentColor" strokeWidth="1.2" strokeDasharray="4 3" />
+                  </svg>
+                  <div className="absolute top-1/2 left-1/2 w-5 h-5 -ml-2.5 -mt-2.5 bg-white rounded-full border-2 border-zinc-950 flex items-center justify-center animate-orbit shadow-lg shadow-amber-500/30">
+                    <div className="w-2 h-2 bg-zinc-950 rounded-full flex items-center justify-center">
+                      <div className="w-0.5 h-0.5 bg-white rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Titles */}
+            <div className="space-y-2">
+              <span className="text-amber-500 font-extrabold text-[10px] uppercase tracking-widest bg-amber-500/10 px-3.5 py-1.5 border border-amber-500/20 rounded">
+                🏆 WORLD CUP ESCROW INTEGRITY
+              </span>
+              <h2 className="text-3xl font-black text-white tracking-tight uppercase mt-2">
+                TRANSFER<span className="text-[#dd1515]">CHAIN</span>
+              </h2>
+              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
+                Secure Athletic Transfers Protocol
+              </p>
+            </div>
+
+            {/* Progress Bar Container */}
+            <div className="w-full space-y-3">
+              <div className="w-full bg-zinc-950 border border-zinc-800/80 h-2.5 p-0.5 rounded-full overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-[#dd1515] to-amber-500 h-full rounded-full transition-all duration-100 shadow-[0_0_10px_rgba(221,21,21,0.5)]"
+                  style={{ width: `${loadingProgress}%` }}
+                />
+              </div>
+              <div className="flex justify-between items-center text-[10px] font-mono text-zinc-500">
+                <span className="animate-pulse">{loadingStep}</span>
+                <span className="font-bold text-zinc-300">{loadingProgress}%</span>
+              </div>
+            </div>
+
+            {/* Skip Button */}
+            <button 
+              onClick={() => {
+                setFadeOut(true);
+                setTimeout(() => setLoading(false), 700);
+              }}
+              className="border border-zinc-800 hover:border-amber-500 text-zinc-500 hover:text-amber-500 text-[10px] uppercase tracking-widest font-black px-6 py-2.5 rounded transition-all duration-300 hover:bg-amber-500/5 cursor-pointer"
+            >
+              Skip Intro
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Top Notification Toast */}
       {notification && (
-        <div className="fixed bottom-6 right-6 bg-[#dd1515] text-white border-2 border-white px-6 py-4 rounded-xl shadow-2xl z-[99999] animate-bounce flex items-center gap-3">
+        <div className="fixed bottom-6 right-6 bg-[#dd1515] text-white border-2 border-white px-6 py-4 rounded shadow-2xl z-[99999] animate-bounce flex items-center gap-3">
           <svg className="w-6 h-6 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -571,50 +722,50 @@ export default function Home() {
         </div>
       )}
 
-      {/* 1. Header Top Info Bar (Specer style) */}
-      <div className="bg-[#111111] border-b border-zinc-800 text-xs py-2.5">
+      {/* 1. Header Top Info Bar (Specer style: Clean Dark) */}
+      <div className="bg-[#111111] border-b border-[#dd1515]/20 text-[11px] py-3 text-zinc-400">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center">
           <div className="flex items-center gap-6">
             <span className="text-[#dd1515] font-bold flex items-center gap-1.5 animate-pulse">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#dd1515]" />
+              <span className="w-2 h-2 rounded-full bg-[#dd1515]" />
               PROTOCOL OPERATIONAL
             </span>
-            <span className="hidden md:inline text-zinc-500">
-              NETWORK: <strong className="text-zinc-300">INJECTIVE EVM MAINNET</strong>
+            <span className="hidden md:inline">
+              NETWORK: <strong className="text-zinc-200">INJECTIVE EVM MAINNET</strong>
             </span>
-            <span className="hidden md:inline text-zinc-500">
-              GAS: <strong className="text-zinc-300">12 GWEI</strong>
+            <span className="hidden md:inline">
+              GAS: <strong className="text-zinc-200">12 GWEI</strong>
             </span>
           </div>
-          <div className="flex items-center gap-4 text-zinc-400">
+          <div className="flex items-center gap-4">
             <a href="#contracts" className="hover:text-white transition-colors">Smart Contracts</a>
-            <span>|</span>
+            <span className="text-zinc-700">|</span>
             <a href="#console" className="hover:text-white transition-colors">dApp Console</a>
           </div>
         </div>
       </div>
 
-      {/* 2. Main Header / Nav (Specer Theme) */}
-      <header className="bg-white text-black shadow-lg sticky top-0 z-50">
+      {/* 2. Main Header / Nav (Specer Theme: Glassmorphic Translucent Navbar) */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md text-zinc-950 border-b border-zinc-200/50 shadow-sm transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center h-20">
           
           {/* Logo & Protocol Title */}
-          <div className="flex items-center gap-4">
-            <div className="bg-[#dd1515] w-12 h-12 flex items-center justify-center text-white font-extrabold text-xl shadow-md transform hover:rotate-6 transition-transform cursor-pointer">
+          <div className="flex items-center gap-3">
+            <div className="bg-[#dd1515] w-12 h-12 flex items-center justify-center text-white font-black text-2xl tracking-tighter">
               TC
             </div>
             <div>
-              <span className="text-2xl font-black tracking-tighter text-[#111111]">
+              <span className="text-2xl font-black tracking-tight text-zinc-950">
                 TRANSFER<span className="text-[#dd1515]">CHAIN</span>
               </span>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold -mt-1.5">
+              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black -mt-1">
                 ON-CHAIN FOOTBALL REGISTRY & ESCROW
               </p>
             </div>
           </div>
 
           {/* Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-8 font-bold text-sm tracking-wide text-zinc-800">
+          <nav className="hidden lg:flex items-center gap-8 font-extrabold text-xs uppercase tracking-wider text-zinc-900">
             <a href="#hero" className="border-b-2 border-[#dd1515] text-[#dd1515] pb-1 hover:text-[#dd1515] transition-all">HOME</a>
             <a href="#live-agreements" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">AGREEMENTS</a>
             <a href="#players" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">PLAYER FEED</a>
@@ -626,68 +777,128 @@ export default function Home() {
           <div className="flex items-center gap-3">
             {walletConnected ? (
               <div className="flex items-center gap-2.5">
-                <span className="hidden sm:inline bg-[#f2f2f2] px-3 py-1.5 text-xs font-mono font-bold border border-zinc-300 text-zinc-700 rounded-md">
+                <span className="hidden sm:inline bg-[#f2f3f5] px-3 py-2 text-xs font-mono font-bold border border-zinc-200 text-zinc-700">
                   0x71C7...976F
                 </span>
                 <button
                   id="wallet-disconnect-btn"
                   onClick={handleConnectWallet}
-                  className="bg-[#dd1515] hover:bg-[#b00f0f] text-white px-5 py-2.5 text-xs font-bold tracking-wider transition-colors shadow-md"
+                  className="bg-[#dd1515] hover:bg-[#b00f0f] text-white px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors"
                 >
-                  DISCONNECT
+                  Disconnect
                 </button>
               </div>
             ) : (
               <button
                 id="wallet-connect-btn"
                 onClick={handleConnectWallet}
-                className="bg-[#111111] hover:bg-[#dd1515] text-white hover:text-white px-6 py-3 text-xs font-bold tracking-wider transition-all duration-300 shadow-md"
+                className="bg-[#111111] hover:bg-[#dd1515] text-white px-6 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300"
               >
-                CONNECT WALLET
+                Connect Wallet
               </button>
             )}
           </div>
         </div>
       </header>
 
-      {/* 3. Hero Section (Specer Background Style) */}
+      {/* 3. Hero Section (Specer Background Style: High contrast sports header) */}
       <section
         id="hero"
-        className="relative bg-cover bg-center py-32 lg:py-48 flex items-center"
+        className="relative bg-cover bg-center py-28 lg:py-36 flex items-center overflow-hidden"
         style={{
-          backgroundImage: "linear-gradient(to right, rgba(17,17,17,0.95) 40%, rgba(221,21,21,0.15)), url('/img/hero/hero-1.jpg')",
+          backgroundImage: "linear-gradient(to right, rgba(17,17,17,0.97) 40%, rgba(221,21,21,0.15) 85%, rgba(17,17,17,0.95)), url('/img/hero/hero-1.jpg')",
         }}
       >
+        {/* Glow Spheres */}
+        <div className="absolute top-1/4 -right-20 w-96 h-96 bg-[#dd1515]/10 rounded-full blur-3xl animate-pulse-glow" />
+        <div className="absolute bottom-1/4 -left-20 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl animate-gold-glow" />
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 w-full relative z-10">
-          <div className="max-w-3xl space-y-6">
+          <div className="grid lg:grid-cols-12 gap-12 items-center">
             
-            <div className="inline-block bg-[#dd1515] text-white font-bold text-xs uppercase tracking-widest px-4 py-2">
-              DECENTRALIZED SPORTS TRANSFERS
+            {/* Left side text column */}
+            <div className="lg:col-span-7 space-y-6">
+              <div className="inline-flex items-center gap-2 bg-[#dd1515] text-white font-extrabold text-[10px] uppercase tracking-widest px-4 py-2 rounded-sm shadow-[0_4px_12px_rgba(221,21,21,0.3)] animate-pulse">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                DECENTRALIZED SPORTS TRANSFERS
+              </div>
+
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight uppercase">
+                The Smart Contract Layer <br />
+                For Professional <span className="text-[#dd1515]">Transfers</span>
+              </h1>
+
+              <p className="text-base sm:text-lg text-zinc-300 max-w-xl font-light leading-relaxed">
+                TransferChain brings institutional security, decentralized registries, and cryptographic trust to global player transfers. Audit registries, execute agreements, and settle in escrow.
+              </p>
+
+              <div className="flex flex-wrap gap-4 pt-4">
+                <a
+                  href="#console"
+                  className="bg-[#dd1515] hover:bg-white text-white hover:text-black font-extrabold text-xs tracking-wider uppercase px-8 py-4 transition-all duration-300 shadow-[0_4px_20px_rgba(221,21,21,0.25)] hover:shadow-white/10 transform hover:-translate-y-0.5"
+                >
+                  Launch Console
+                </a>
+                <a
+                  href="#players"
+                  className="bg-transparent hover:bg-white/10 text-white font-extrabold text-xs tracking-wider uppercase px-8 py-4 border border-zinc-500 hover:border-white transition-all duration-300 transform hover:-translate-y-0.5"
+                >
+                  Browse Player Feed
+                </a>
+              </div>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tight uppercase">
-              The Smart Contract Layer <br />
-              For Professional <span className="text-[#dd1515]">Transfers</span>
-            </h1>
+            {/* Right side trophy showcase column */}
+            <div className="lg:col-span-5 hidden lg:flex flex-col items-center justify-center bg-[#141517]/90 backdrop-blur-md border border-zinc-800/80 p-8 rounded shadow-2xl relative overflow-hidden group animate-float">
+              {/* Background decorative glows */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#dd1515]/5 rounded-full blur-2xl group-hover:bg-[#dd1515]/10 transition-all duration-500" />
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-all duration-500" />
+              
+              {/* World Cup Trophy SVG in Hero */}
+              <div className="relative w-44 h-44 flex items-center justify-center mb-6">
+                <svg className="w-32 h-32 text-amber-500 animate-gold-glow" viewBox="0 0 100 120" fill="currentColor">
+                  {/* Pedestal Base */}
+                  <rect x="30" y="102" width="40" height="12" rx="2" fill="#1e293b" />
+                  <rect x="33" y="95" width="34" height="7" fill="url(#gold-grad)" />
+                  <path d="M 37,95 L 40,82 L 60,82 L 63,95 Z" fill="#0f172a" stroke="url(#gold-grad)" strokeWidth="1.5" />
+                  
+                  {/* Stem / Body */}
+                  <path d="M 43,82 Q 50,75 42,50 Q 34,35 44,24 L 56,24 Q 66,35 58,50 Q 50,75 57,82 Z" fill="url(#gold-grad)" />
+                  
+                  {/* Supporting Figures wrapping the globe */}
+                  <path d="M 39,52 Q 28,45 28,30 Q 28,15 40,20 Q 44,22 43,30 Q 36,28 36,38 Q 36,46 41,51 Z" fill="url(#gold-grad)" opacity="0.95" />
+                  <path d="M 61,52 Q 72,45 72,30 Q 72,15 60,20 Q 56,22 57,30 Q 64,28 64,38 Q 64,46 59,51 Z" fill="url(#gold-grad)" opacity="0.95" />
+                  
+                  {/* The Globe */}
+                  <circle cx="50" cy="24" r="13" fill="url(#gold-grad)" />
+                </svg>
+                
+                {/* Orbiting Ring */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="relative w-40 h-40">
+                    <svg className="absolute inset-0 w-full h-full text-amber-500/25 -rotate-12" viewBox="0 0 100 100">
+                      <ellipse cx="50" cy="50" rx="38" ry="12" fill="none" stroke="currentColor" strokeWidth="1.2" strokeDasharray="4 3" />
+                    </svg>
+                    <div className="absolute top-1/2 left-1/2 w-4 h-4 -ml-2 -mt-2 bg-white rounded-full border-2 border-zinc-950 flex items-center justify-center animate-orbit shadow-md" />
+                  </div>
+                </div>
+              </div>
 
-            <p className="text-lg text-zinc-300 max-w-xl font-light leading-relaxed">
-              TransferChain brings institutional security, decentralized registries, and cryptographic trust to global player transfers. Audit registries, execute agreements, and settle in escrow.
-            </p>
-
-            <div className="flex flex-wrap gap-4 pt-4">
-              <a
-                href="#console"
-                className="bg-[#dd1515] hover:bg-white text-white hover:text-black font-bold text-sm tracking-wider uppercase px-8 py-4 transition-all duration-300 shadow-xl"
-              >
-                Launch Console
-              </a>
-              <a
-                href="#players"
-                className="bg-transparent hover:bg-white/10 text-white font-bold text-sm tracking-wider uppercase px-8 py-4 border border-zinc-500 hover:border-white transition-all duration-300"
-              >
-                Browse Player Feed
-              </a>
+              {/* Showcase stats */}
+              <div className="w-full text-center space-y-2 border-t border-zinc-800/80 pt-4">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono">World Cup Escrow Pool</span>
+                <h4 className="text-2xl font-black text-white">$450,000,000 USDC</h4>
+                <div className="flex justify-center gap-4 text-[10px] font-bold text-zinc-400">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                    SECURED
+                  </span>
+                  <span>•</span>
+                  <span>AUDITED BY OAK SECURITY</span>
+                </div>
+              </div>
             </div>
+
           </div>
         </div>
         
@@ -695,10 +906,10 @@ export default function Home() {
         <div className="absolute right-0 bottom-0 w-1/3 h-full opacity-10 pointer-events-none bg-[radial-gradient(#dd1515_1.5px,transparent_1.5px)] [background-size:16px_16px]" />
       </section>
 
-      {/* 4. Live Agreements / Transfers Section (Specer Match Schedule Style) */}
+      {/* 4. Live Agreements / Transfers Section (Specer Match Schedule Style: Dark graphic backdrop) */}
       <section
         id="live-agreements"
-        className="py-20 relative bg-cover bg-center"
+        className="py-20 relative bg-cover bg-center border-b border-zinc-200"
         style={{
           backgroundImage: "linear-gradient(to bottom, rgba(21,22,24,0.98), rgba(21,22,24,0.95)), url('/img/match/match-bg.jpg')",
         }}
@@ -709,20 +920,20 @@ export default function Home() {
             {/* Left Column: Pending Agreements */}
             <div className="space-y-6">
               <div className="border-l-4 border-[#dd1515] pl-4">
-                <span className="text-xs font-bold text-[#dd1515] tracking-widest uppercase">Contract Negotiator</span>
+                <span className="text-xs font-extrabold text-[#dd1515] tracking-widest uppercase">Contract Negotiator</span>
                 <h2 className="text-2xl font-black text-white uppercase tracking-tight">Active Transfer Listings</h2>
               </div>
               
               <div className="space-y-4">
                 {listings.filter(l => l.status === "Active").map((listing) => (
-                  <div key={listing.id} className="bg-[#1a1b1d] border border-zinc-800 p-5 hover:border-[#dd1515] transition-all">
-                    <div className="flex justify-between items-center text-xs text-zinc-500 mb-3 border-b border-zinc-800/50 pb-2">
+                  <div key={listing.id} className="bg-[#1a1b1d]/95 border border-zinc-800 p-5 hover:border-[#dd1515] hover:shadow-[0_4px_25px_rgba(221,21,21,0.15)] hover:-translate-y-0.5 transition-all duration-300 rounded-sm">
+                    <div className="flex justify-between items-center text-[10px] text-zinc-500 mb-3 border-b border-zinc-800/50 pb-2">
                       <span className="font-mono">LISTING ID: #{listing.id}</span>
                       <span>CREATED: {listing.createdAt}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#2a2b2d] flex items-center justify-center text-white font-bold border border-[#dd1515]/30">
+                        <div className="w-10 h-10 rounded bg-[#2a2b2d] flex items-center justify-center text-white font-bold border border-[#dd1515]/30">
                           {listing.playerName.charAt(0)}
                         </div>
                         <div>
@@ -732,7 +943,8 @@ export default function Home() {
                       </div>
                       <div className="text-right">
                         <div className="text-[#dd1515] font-black text-lg">{listing.price.toLocaleString()} USDC</div>
-                        <span className="inline-block bg-[#dd1515]/10 text-[#dd1515] text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 mt-1">
+                        <span className="inline-flex items-center gap-1 bg-[#dd1515]/10 text-[#dd1515] text-[9px] uppercase font-black tracking-wider px-2.5 py-1 mt-1 border border-[#dd1515]/20 rounded-sm">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#dd1515] animate-pulse" />
                           ACTIVE LISTING
                         </span>
                       </div>
@@ -745,28 +957,31 @@ export default function Home() {
             {/* Right Column: Pending Offers & Escrow (Replicating Results style) */}
             <div className="space-y-6">
               <div className="border-l-4 border-[#dd1515] pl-4">
-                <span className="text-xs font-bold text-[#dd1515] tracking-widest uppercase">Smart Escrow</span>
+                <span className="text-xs font-extrabold text-[#dd1515] tracking-widest uppercase">Smart Escrow</span>
                 <h2 className="text-2xl font-black text-white uppercase tracking-tight">Escrow & Offer Settlements</h2>
               </div>
 
               <div className="space-y-4">
                 {offers.map((offer, idx) => (
-                  <div key={idx} className="bg-[#1a1b1d] border border-zinc-800 p-5 hover:border-[#dd1515] transition-all">
-                    <div className="flex justify-between items-center text-xs text-zinc-500 mb-3 border-b border-zinc-800/50 pb-2">
+                  <div key={idx} className="bg-[#1a1b1d]/95 border border-zinc-800 p-5 hover:border-[#dd1515] hover:shadow-[0_4px_25px_rgba(221,21,21,0.15)] hover:-translate-y-0.5 transition-all duration-300 rounded-sm">
+                    <div className="flex justify-between items-center text-[10px] text-zinc-500 mb-3 border-b border-zinc-800/50 pb-2">
                       <span className="font-mono">LISTING TARGET: #{offer.listingId}</span>
                       <span>DATE: {offer.createdAt}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <div>
-                        <h4 className="font-bold text-zinc-300 text-xs uppercase tracking-wider">Buyer Club Request</h4>
+                        <h4 className="font-bold text-zinc-400 text-[10px] uppercase tracking-wider">Buyer Club Request</h4>
                         <p className="font-black text-white text-base mt-1">{offer.buyerName}</p>
                         <p className="text-xs text-zinc-400">Target Player: {offer.playerName}</p>
                       </div>
                       <div className="text-right">
                         <div className="text-white font-black text-base">{offer.amount.toLocaleString()} USDC</div>
-                        <span className={`inline-block text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 mt-1.5 ${
-                          offer.status === "Pending" ? "bg-amber-500/10 text-amber-500" : "bg-emerald-500/10 text-emerald-500"
+                        <span className={`inline-flex items-center gap-1 text-[9px] uppercase font-black tracking-wider px-2.5 py-1 mt-1.5 rounded-sm border ${
+                          offer.status === "Pending" 
+                            ? "bg-amber-500/10 text-amber-500 border-amber-500/20" 
+                            : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
                         }`}>
+                          <span className={`w-1 h-1 rounded-full ${offer.status === "Pending" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"}`} />
                           OFFER {offer.status}
                         </span>
                       </div>
@@ -780,59 +995,59 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 5. Player Registry Directory (Specer Soccer Feed style) */}
-      <section id="players" className="py-20 bg-[#1e1f22]">
+      {/* 5. Player Registry Directory (Specer Soccer Feed style: Totally Light Theme Cards) */}
+      <section id="players" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           
           {/* Section Header */}
-          <div className="flex justify-between items-end border-b border-zinc-800 pb-5 mb-10">
+          <div className="flex justify-between items-end border-b border-zinc-200 pb-5 mb-10">
             <div>
-              <span className="text-xs font-bold text-[#dd1515] tracking-widest uppercase">Verified Profiles</span>
-              <h2 className="text-3xl font-black text-white uppercase tracking-tight">Registered Player Directory</h2>
+              <span className="text-xs font-extrabold text-[#dd1515] tracking-widest uppercase">Verified Profiles</span>
+              <h2 className="text-3xl font-black text-zinc-950 uppercase tracking-tight">Registered Player Directory</h2>
             </div>
-            <a href="#console" className="hidden sm:inline bg-zinc-800 hover:bg-[#dd1515] hover:text-white text-zinc-300 font-bold text-xs uppercase tracking-wider px-4 py-2.5 transition-colors">
-              + REGISTER NEW PLAYER
+            <a href="#console" className="hidden sm:inline bg-zinc-900 hover:bg-[#dd1515] text-white font-extrabold text-xs uppercase tracking-wider px-4 py-3.5 transition-colors">
+              + Register New Player
             </a>
           </div>
 
           {/* Grid of Players */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {players.map((player) => (
-              <div key={player.id} className="bg-[#151618] border border-zinc-800 overflow-hidden group shadow-lg">
+              <div key={player.id} className="bg-white border border-zinc-200 overflow-hidden group shadow-md hover:shadow-2xl hover:border-[#dd1515]/30 hover:-translate-y-2.5 transition-all duration-500 ease-out rounded-sm">
                 
                 {/* Image Container with zoom-on-hover */}
-                <div className="relative h-64 bg-zinc-900 overflow-hidden">
+                <div className="relative h-64 bg-zinc-100 overflow-hidden">
                   <img
                     src={player.imageURI}
                     alt={player.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute top-4 left-4 bg-[#dd1515] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1">
+                  <div className="absolute top-4 left-4 bg-[#dd1515] text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1">
                     {player.position}
                   </div>
-                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black via-black/40 to-transparent p-4">
-                    <span className="text-xs text-zinc-400 block font-mono">PLAYER ID: #{player.id}</span>
-                    <span className="text-xs text-zinc-300 block">{player.nationality}</span>
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4">
+                    <span className="text-xs text-zinc-300 block font-mono">PLAYER ID: #{player.id}</span>
+                    <span className="text-xs text-zinc-200 block font-medium">{player.nationality}</span>
                   </div>
                 </div>
 
-                {/* Content */}
+                {/* Content (Specer Card layout) */}
                 <div className="p-5 space-y-4">
                   <div>
-                    <h3 className="text-lg font-black text-white uppercase tracking-tight">{player.name}</h3>
+                    <h3 className="text-lg font-black text-zinc-950 uppercase tracking-tight">{player.name}</h3>
                     <p className="text-xs text-zinc-500 mt-1">
-                      Current Club: <strong className="text-zinc-300">{player.currentClub}</strong>
+                      Current Club: <strong className="text-zinc-800 font-bold">{player.currentClub}</strong>
                     </p>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2 text-xs border-t border-zinc-800/80 pt-3">
+                  <div className="grid grid-cols-2 gap-2 text-xs border-t border-zinc-100 pt-3">
                     <div>
-                      <span className="text-zinc-500 block uppercase text-[10px]">Age</span>
-                      <strong className="text-zinc-300">{player.age} Years</strong>
+                      <span className="text-zinc-400 block uppercase text-[9px] font-extrabold">Age</span>
+                      <strong className="text-zinc-700 font-bold">{player.age} Years</strong>
                     </div>
                     <div>
-                      <span className="text-zinc-500 block uppercase text-[10px]">Status</span>
-                      <strong className="text-emerald-500 flex items-center gap-1">
+                      <span className="text-zinc-400 block uppercase text-[9px] font-extrabold">Status</span>
+                      <strong className="text-emerald-600 flex items-center gap-1 font-bold">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         {player.status}
                       </strong>
@@ -845,7 +1060,7 @@ export default function Home() {
                       setConsoleTab("list");
                       setListForm({ ...listForm, playerId: player.id });
                     }}
-                    className="block text-center bg-[#dd1515] hover:bg-white hover:text-black text-white font-bold text-xs uppercase py-3.5 tracking-wider transition-all duration-300"
+                    className="block text-center bg-[#dd1515] hover:bg-zinc-950 text-white font-extrabold text-xs uppercase py-3.5 tracking-wider transition-all duration-300"
                   >
                     Transfer Console Action
                   </a>
@@ -856,30 +1071,31 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. Protocol Ledger & Rankings (Specer News & Standings style) */}
-      <section id="activity" className="py-20">
+      {/* 6. Protocol Ledger & Rankings (Specer News & Standings style: Light Background layout) */}
+      <section id="activity" className="py-20 bg-[#f4f5f8] border-t border-b border-zinc-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid lg:grid-cols-12 gap-12">
             
             {/* Left 8 Columns: Transaction & Event Logs */}
             <div className="lg:col-span-8 space-y-8">
               <div className="border-l-4 border-[#dd1515] pl-4">
-                <span className="text-xs font-bold text-[#dd1515] tracking-widest uppercase">Audit Trail</span>
-                <h2 className="text-2xl font-black text-white uppercase tracking-tight">On-Chain Registry Logs</h2>
+                <span className="text-xs font-extrabold text-[#dd1515] tracking-widest uppercase">Audit Trail</span>
+                <h2 className="text-2xl font-black text-zinc-950 uppercase tracking-tight">On-Chain Registry Logs</h2>
               </div>
 
-              {/* Log Timeline */}
+              {/* Log Timeline (Specer News block layout: Clean white cards) */}
               <div className="space-y-4">
                 {logs.map((log) => (
-                  <div key={log.id} className="bg-[#1e1f22] border border-zinc-800 p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-zinc-700 transition-all">
+                  <div key={log.id} className="bg-white border border-zinc-200 p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-[#dd1515]/20 hover:shadow-md hover:translate-x-1 transition-all duration-300 shadow-sm rounded-sm">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="bg-[#dd1515] text-white text-[9px] font-mono uppercase font-bold tracking-wider px-2 py-0.5">
+                        <span className="bg-[#dd1515] text-white text-[9px] font-mono uppercase font-black tracking-wider px-2 py-0.5 rounded-sm flex items-center gap-1.5">
+                          <span className="w-1 h-1 rounded-full bg-white animate-pulse" />
                           {log.event}
                         </span>
                         <span className="text-xs text-zinc-500 font-mono">block: {log.block}</span>
                       </div>
-                      <p className="text-sm font-bold text-zinc-200">{log.details}</p>
+                      <p className="text-sm font-bold text-zinc-800">{log.details}</p>
                       <div className="text-xs text-zinc-500 font-mono flex items-center gap-2">
                         <span>TX: {log.hash}</span>
                         <span>•</span>
@@ -895,37 +1111,37 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right 4 Columns: Verified Clubs (Points Table style) */}
+            {/* Right 4 Columns: Verified Clubs (Points Table style: Light theme standings table) */}
             <div className="lg:col-span-4 space-y-8">
               <div className="border-l-4 border-[#dd1515] pl-4">
-                <span className="text-xs font-bold text-[#dd1515] tracking-widest uppercase">Identity List</span>
-                <h2 className="text-2xl font-black text-white uppercase tracking-tight">Verified Club Registry</h2>
+                <span className="text-xs font-extrabold text-[#dd1515] tracking-widest uppercase">Identity List</span>
+                <h2 className="text-2xl font-black text-zinc-950 uppercase tracking-tight">Verified Club Registry</h2>
               </div>
 
-              <div className="bg-[#1e1f22] border border-zinc-800 overflow-hidden">
+              <div className="bg-white border border-zinc-200 overflow-hidden shadow-md">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-[#151618] text-xs font-bold uppercase text-zinc-400 border-b border-zinc-800">
-                      <th className="py-3 px-4 w-12 text-center">ID</th>
-                      <th className="py-3 px-2">Club Name</th>
-                      <th className="py-3 px-4 text-center">Status</th>
+                    <tr className="bg-[#111111] text-xs font-black uppercase text-zinc-200 border-b border-zinc-200">
+                      <th className="py-4 px-4 w-12 text-center">ID</th>
+                      <th className="py-4 px-2">Club Name</th>
+                      <th className="py-4 px-4 text-center">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-800 text-sm">
+                  <tbody className="divide-y divide-zinc-200 text-sm text-zinc-850">
                     {clubs.map((club) => (
-                      <tr key={club.id} className="hover:bg-[#1a1b1d] transition-colors">
-                        <td className="py-4 px-4 font-mono text-zinc-500 text-center">{club.id}</td>
+                      <tr key={club.id} className="hover:bg-zinc-50/80 hover:translate-x-0.5 transition-all duration-300 group/row">
+                        <td className="py-4 px-4 font-mono text-zinc-400 text-center">{club.id}</td>
                         <td className="py-4 px-2">
                           <div className="flex items-center gap-3">
-                            <img src={club.logoURI} alt="" className="w-6 h-6 rounded-full" />
+                            <img src={club.logoURI} alt="" className="w-6 h-6 rounded-full border border-zinc-200 group-hover/row:scale-110 transition-transform duration-300" />
                             <div>
-                              <strong className="text-white block font-bold">{club.name}</strong>
-                              <span className="text-[10px] text-zinc-400">{club.league}</span>
+                              <strong className="text-zinc-900 block font-extrabold">{club.name}</strong>
+                              <span className="text-[10px] text-zinc-500">{club.league}</span>
                             </div>
                           </div>
                         </td>
                         <td className="py-4 px-4 text-center">
-                          <span className="inline-block bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                          <span className="inline-block bg-emerald-500/10 text-emerald-600 text-[9px] font-extrabold px-2.5 py-1 rounded uppercase tracking-wider border border-emerald-500/20">
                             {club.status}
                           </span>
                         </td>
@@ -940,27 +1156,27 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 7. Interactive Protocol Console (Core Actionable Module) */}
-      <section id="console" className="py-20 bg-zinc-900/60 border-t border-zinc-800 relative">
+      {/* 7. Interactive Protocol Console (Totally Light Dashboard Style) */}
+      <section id="console" className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           
           {/* Header */}
           <div className="text-center max-w-2xl mx-auto space-y-3 mb-12">
-            <span className="bg-[#dd1515]/10 text-[#dd1515] font-bold text-xs uppercase tracking-widest px-4 py-2">
+            <span className="bg-[#dd1515]/10 text-[#dd1515] font-extrabold text-xs uppercase tracking-widest px-4 py-2 border border-[#dd1515]/20">
               DAPP PLAYGROUND
             </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">
+            <h2 className="text-3xl sm:text-4xl font-black text-zinc-950 uppercase tracking-tight">
               TransferChain Console Simulator
             </h2>
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-zinc-500">
               Simulate interacting directly with TransferChain smart contracts on Injective EVM. Connect your wallet above to run contract transactions.
             </p>
           </div>
 
-          <div className="bg-[#151618] border border-zinc-800 rounded-lg overflow-hidden shadow-2xl">
+          <div className="bg-[#fcfdfe] border border-zinc-200 rounded overflow-hidden shadow-lg">
             
             {/* Tabs */}
-            <div className="flex border-b border-zinc-800 overflow-x-auto bg-[#111111]">
+            <div className="flex border-b border-zinc-200 overflow-x-auto bg-[#f1f3f6]">
               {[
                 { tab: "club", label: "ClubRegistry.sol" },
                 { tab: "player", label: "PlayerRegistry.sol" },
@@ -971,10 +1187,10 @@ export default function Home() {
                 <button
                   key={item.tab}
                   onClick={() => setConsoleTab(item.tab as any)}
-                  className={`py-4 px-6 font-bold text-xs uppercase tracking-wider transition-all whitespace-nowrap ${
+                  className={`py-4.5 px-6 font-extrabold text-xs uppercase tracking-wider transition-all whitespace-nowrap ${
                     consoleTab === item.tab
-                      ? "bg-[#dd1515] text-white"
-                      : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                      ? "bg-[#dd1515] text-white border-b-2 border-[#dd1515]"
+                      : "text-zinc-600 hover:bg-zinc-200 hover:text-zinc-950"
                   }`}
                 >
                   {item.label}
@@ -983,18 +1199,18 @@ export default function Home() {
             </div>
 
             {/* Form Panels */}
-            <div className="p-8">
+            <div className="p-8 bg-white">
               
               {!walletConnected && (
-                <div className="bg-red-500/10 border border-red-500/30 p-6 rounded-md text-center space-y-3 mb-6">
-                  <h4 className="text-red-500 font-bold text-sm uppercase tracking-wide">Wallet Not Connected</h4>
-                  <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+                <div className="bg-red-500/5 border border-red-500/25 p-6 rounded text-center space-y-3 mb-6">
+                  <h4 className="text-red-600 font-extrabold text-sm uppercase tracking-wide">Wallet Not Connected</h4>
+                  <p className="text-xs text-zinc-500 max-w-sm mx-auto">
                     You must connect a Web3 wallet (such as Metamask or Keplr) to simulate sending transaction payloads.
                   </p>
                   <button
                     id="console-connect-wallet-btn"
                     onClick={handleConnectWallet}
-                    className="bg-[#dd1515] hover:bg-white text-white hover:text-black text-xs font-bold px-4 py-2 transition-colors uppercase tracking-wider"
+                    className="bg-[#dd1515] hover:bg-[#111111] text-white text-xs font-bold px-5 py-2.5 transition-colors uppercase tracking-wider"
                   >
                     Connect Wallet
                   </button>
@@ -1006,21 +1222,21 @@ export default function Home() {
                 <form onSubmit={handleRegisterClub} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Club Name</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Club Name</label>
                       <input
                         type="text"
                         placeholder="e.g. Arsenal FC"
                         value={clubForm.name}
                         onChange={(e) => setClubForm({ ...clubForm, name: e.target.value })}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">League</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">League</label>
                       <select
                         value={clubForm.league}
                         onChange={(e) => setClubForm({ ...clubForm, league: e.target.value })}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       >
                         <option>Premier League</option>
                         <option>La Liga</option>
@@ -1030,41 +1246,41 @@ export default function Home() {
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Country</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Country</label>
                       <input
                         type="text"
                         placeholder="e.g. England"
                         value={clubForm.country}
                         onChange={(e) => setClubForm({ ...clubForm, country: e.target.value })}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">City</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">City</label>
                       <input
                         type="text"
                         placeholder="e.g. London"
                         value={clubForm.city}
                         onChange={(e) => setClubForm({ ...clubForm, city: e.target.value })}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Metadata URI (IPFS Pointer)</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Metadata URI (IPFS Pointer)</label>
                       <input
                         type="text"
                         value={clubForm.metadataURI}
                         onChange={(e) => setClubForm({ ...clubForm, metadataURI: e.target.value })}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm font-mono text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm font-mono text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Logo Image URI</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Logo Image URI</label>
                       <input
                         type="text"
                         value={clubForm.logoURI}
                         onChange={(e) => setClubForm({ ...clubForm, logoURI: e.target.value })}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm font-mono text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm font-mono text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1072,7 +1288,7 @@ export default function Home() {
                   <button
                     type="submit"
                     disabled={!walletConnected}
-                    className="w-full bg-[#dd1515] hover:bg-[#b00f0f] text-white disabled:bg-zinc-700 disabled:cursor-not-allowed font-bold text-sm tracking-wider uppercase py-4 transition-colors"
+                    className="w-full bg-[#dd1515] hover:bg-[#111111] text-white disabled:bg-zinc-350 disabled:cursor-not-allowed font-extrabold text-sm tracking-wider uppercase py-4 transition-colors"
                   >
                     Execute: registerClub()
                   </button>
@@ -1084,21 +1300,21 @@ export default function Home() {
                 <form onSubmit={handleRegisterPlayer} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Player Name</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Player Name</label>
                       <input
                         type="text"
                         placeholder="e.g. Bukayo Saka"
                         value={playerForm.name}
                         onChange={(e) => setPlayerForm({ ...playerForm, name: e.target.value })}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Position</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Position</label>
                       <select
                         value={playerForm.position}
                         onChange={(e) => setPlayerForm({ ...playerForm, position: e.target.value })}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       >
                         <option>Forward</option>
                         <option>Striker</option>
@@ -1108,31 +1324,31 @@ export default function Home() {
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Age</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Age</label>
                       <input
                         type="number"
                         value={playerForm.age}
                         onChange={(e) => setPlayerForm({ ...playerForm, age: Number(e.target.value) })}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Nationality</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Nationality</label>
                       <input
                         type="text"
                         placeholder="e.g. England"
                         value={playerForm.nationality}
                         onChange={(e) => setPlayerForm({ ...playerForm, nationality: e.target.value })}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Metadata URI</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Metadata URI</label>
                       <input
                         type="text"
                         value={playerForm.metadataURI}
                         onChange={(e) => setPlayerForm({ ...playerForm, metadataURI: e.target.value })}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm font-mono text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm font-mono text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1140,7 +1356,7 @@ export default function Home() {
                   <button
                     type="submit"
                     disabled={!walletConnected}
-                    className="w-full bg-[#dd1515] hover:bg-[#b00f0f] text-white disabled:bg-zinc-700 disabled:cursor-not-allowed font-bold text-sm tracking-wider uppercase py-4 transition-colors"
+                    className="w-full bg-[#dd1515] hover:bg-[#111111] text-white disabled:bg-zinc-350 disabled:cursor-not-allowed font-extrabold text-sm tracking-wider uppercase py-4 transition-colors"
                   >
                     Execute: registerPlayer()
                   </button>
@@ -1152,11 +1368,11 @@ export default function Home() {
                 <form onSubmit={handleCreateListing} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Select Player profile</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Select Player profile</label>
                       <select
                         value={listForm.playerId}
                         onChange={(e) => setListForm({ ...listForm, playerId: Number(e.target.value) })}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       >
                         {players.map((p) => (
                           <option key={p.id} value={p.id}>
@@ -1166,21 +1382,21 @@ export default function Home() {
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Listing Price (USDC)</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Listing Price (USDC)</label>
                       <input
                         type="number"
                         value={listForm.price}
                         onChange={(e) => setListForm({ ...listForm, price: Number(e.target.value) })}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Listing Metadata URI</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Listing Metadata URI</label>
                       <input
                         type="text"
                         value={listForm.metadataURI}
                         onChange={(e) => setListForm({ ...listForm, metadataURI: e.target.value })}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm font-mono text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm font-mono text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1188,7 +1404,7 @@ export default function Home() {
                   <button
                     type="submit"
                     disabled={!walletConnected}
-                    className="w-full bg-[#dd1515] hover:bg-[#b00f0f] text-white disabled:bg-zinc-700 disabled:cursor-not-allowed font-bold text-sm tracking-wider uppercase py-4 transition-colors"
+                    className="w-full bg-[#dd1515] hover:bg-[#111111] text-white disabled:bg-zinc-350 disabled:cursor-not-allowed font-extrabold text-sm tracking-wider uppercase py-4 transition-colors"
                   >
                     Execute: createListing()
                   </button>
@@ -1200,11 +1416,11 @@ export default function Home() {
                 <form onSubmit={handleMakeOffer} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Target Listing</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Target Listing</label>
                       <select
                         value={offerForm.listingId}
                         onChange={(e) => setOfferForm({ ...offerForm, listingId: Number(e.target.value) })}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       >
                         {listings.filter(l => l.status === "Active").map((l) => (
                           <option key={l.id} value={l.id}>
@@ -1214,12 +1430,12 @@ export default function Home() {
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Offer Amount (USDC)</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Offer Amount (USDC)</label>
                       <input
                         type="number"
                         value={offerForm.amount}
                         onChange={(e) => setOfferForm({ ...offerForm, amount: Number(e.target.value) })}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1227,7 +1443,7 @@ export default function Home() {
                   <button
                     type="submit"
                     disabled={!walletConnected}
-                    className="w-full bg-[#dd1515] hover:bg-[#b00f0f] text-white disabled:bg-zinc-700 disabled:cursor-not-allowed font-bold text-sm tracking-wider uppercase py-4 transition-colors"
+                    className="w-full bg-[#dd1515] hover:bg-[#111111] text-white disabled:bg-zinc-350 disabled:cursor-not-allowed font-extrabold text-sm tracking-wider uppercase py-4 transition-colors"
                   >
                     Execute: makeOffer()
                   </button>
@@ -1239,7 +1455,7 @@ export default function Home() {
                 <form onSubmit={handleSettleEscrow} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Select Listing to Settle</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Select Listing to Settle</label>
                       <select
                         value={escrowForm.listingId}
                         onChange={(e) => {
@@ -1252,7 +1468,7 @@ export default function Home() {
                             buyer: relatedOffer ? relatedOffer.buyer : "0x32A41f021dde4a25abf6f49291f422e02e825a00",
                           });
                         }}
-                        className="w-full px-4 py-3 bg-[#1e1f22] border border-zinc-800 rounded text-sm text-white focus:border-[#dd1515] focus:outline-none"
+                        className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm text-zinc-900 focus:border-[#dd1515] focus:outline-none"
                       >
                         {listings.filter((l) => l.status === "Active").map((l) => (
                           <option key={l.id} value={l.id}>
@@ -1262,21 +1478,21 @@ export default function Home() {
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Settlement Value (USDC)</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Settlement Value (USDC)</label>
                       <input
                         type="text"
                         readOnly
                         value={escrowForm.amount.toLocaleString() + " USDC"}
-                        className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 text-zinc-400 rounded text-sm font-bold focus:outline-none cursor-not-allowed"
+                        className="w-full px-4 py-3 bg-zinc-100 border border-zinc-300 text-zinc-500 rounded text-sm font-extrabold focus:outline-none cursor-not-allowed"
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-zinc-400 uppercase font-bold tracking-wider">Buyer Club Wallet</label>
+                      <label className="text-xs text-zinc-500 uppercase font-black tracking-wider">Buyer Club Wallet</label>
                       <input
                         type="text"
                         readOnly
                         value={escrowForm.buyer}
-                        className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 text-zinc-400 rounded text-sm font-mono focus:outline-none cursor-not-allowed"
+                        className="w-full px-4 py-3 bg-zinc-100 border border-zinc-300 text-zinc-500 rounded text-sm font-mono focus:outline-none cursor-not-allowed"
                       />
                     </div>
                   </div>
@@ -1284,7 +1500,7 @@ export default function Home() {
                   <button
                     type="submit"
                     disabled={!walletConnected || listings.filter(l => l.status === "Active").length === 0}
-                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white disabled:bg-zinc-700 disabled:cursor-not-allowed font-bold text-sm tracking-wider uppercase py-4 transition-colors"
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white disabled:bg-zinc-350 disabled:cursor-not-allowed font-extrabold text-sm tracking-wider uppercase py-4 transition-colors"
                   >
                     Execute: fundAndReleaseEscrow()
                   </button>
@@ -1296,14 +1512,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 8. Smart Contracts List Section */}
-      <section id="contracts" className="py-20 bg-[#151618] border-t border-zinc-800">
+      {/* 8. Smart Contracts List Section (Totally Light Theme Cards) */}
+      <section id="contracts" className="py-20 bg-[#f4f5f8] border-t border-zinc-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="text-center max-w-xl mx-auto space-y-3 mb-16">
-            <span className="text-xs font-bold text-[#dd1515] tracking-widest uppercase">Ecosystem Contracts</span>
-            <h2 className="text-2xl font-black text-white uppercase tracking-tight">Smart Contract Repository</h2>
-            <p className="text-sm text-zinc-400">
-              Here is the modular structure of the smart contract architecture implemented in the <code className="text-zinc-200">TransferChain-Contracts</code> directory.
+            <span className="text-xs font-extrabold text-[#dd1515] tracking-widest uppercase">Ecosystem Contracts</span>
+            <h2 className="text-2xl font-black text-zinc-950 uppercase tracking-tight">Smart Contract Repository</h2>
+            <p className="text-sm text-zinc-500">
+              Here is the modular structure of the smart contract architecture implemented in the <code className="text-zinc-700 bg-zinc-200 px-1 rounded">TransferChain-Contracts</code> directory.
             </p>
           </div>
 
@@ -1340,14 +1556,14 @@ export default function Home() {
                 methods: "depositRevenue(), withdrawFees(), updateTokenStatus()"
               }
             ].map((contract, index) => (
-              <div key={index} className="bg-[#1e1f22] border border-zinc-800 p-6 space-y-4 hover:border-zinc-700 transition-all">
-                <div className="w-10 h-10 bg-[#dd1515]/10 text-[#dd1515] font-mono font-bold flex items-center justify-center border border-[#dd1515]/20">
+              <div key={index} className="bg-white border border-zinc-200 p-6 space-y-4 hover:border-[#dd1515]/30 hover:shadow-lg hover:-translate-y-1.5 transition-all duration-300 shadow-sm rounded-sm">
+                <div className="w-10 h-10 bg-[#dd1515]/10 text-[#dd1515] font-mono font-black flex items-center justify-center border border-[#dd1515]/20 rounded-sm">
                   {`0${index + 1}`}
                 </div>
-                <h3 className="text-lg font-black text-white uppercase tracking-tight">{contract.name}</h3>
-                <p className="text-xs text-zinc-400 leading-relaxed">{contract.desc}</p>
-                <div className="pt-2 border-t border-zinc-800/80">
-                  <span className="text-[10px] text-zinc-500 uppercase font-bold block">Key ABI Methods</span>
+                <h3 className="text-lg font-black text-zinc-950 uppercase tracking-tight">{contract.name}</h3>
+                <p className="text-xs text-zinc-650 leading-relaxed">{contract.desc}</p>
+                <div className="pt-2 border-t border-zinc-100">
+                  <span className="text-[9px] text-zinc-400 uppercase font-black block">Key ABI Methods</span>
                   <code className="text-xs text-[#dd1515] font-mono block mt-1">{contract.methods}</code>
                 </div>
               </div>
@@ -1356,9 +1572,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 9. Footer (Specer Footer Background Style) */}
+      {/* 9. Footer (Specer Footer Background Style: Dark theme) */}
       <footer
-        className="relative bg-[#111111] text-zinc-400 py-16 border-t border-zinc-900 bg-cover bg-center"
+        className="relative bg-[#111111] text-zinc-400 py-16 border-t border-zinc-950 bg-cover bg-center"
         style={{
           backgroundImage: "linear-gradient(to top, rgba(17,17,17,0.99), rgba(17,17,17,0.92)), url('/img/footer-bg.jpg')",
         }}
@@ -1371,7 +1587,7 @@ export default function Home() {
               <span className="text-2xl font-black tracking-tighter text-white uppercase">
                 TRANSFER<span className="text-[#dd1515]">CHAIN</span>
               </span>
-              <p className="text-xs leading-relaxed">
+              <p className="text-xs leading-relaxed text-zinc-400">
                 A trustless settlement registry and transfer escrow built on smart contracts. We ensure safety, accuracy, and compliance for professional sports transfers.
               </p>
             </div>
@@ -1423,9 +1639,9 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-zinc-850 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
+          <div className="mt-12 pt-8 border-t border-zinc-800/80 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-zinc-500">
             <p>© {new Date().getFullYear()} TransferChain Protocol. All Rights Reserved. Designed with Specer Sports Theme.</p>
-            <div className="flex gap-6 text-zinc-500">
+            <div className="flex gap-6">
               <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
               <a href="#" className="hover:text-white transition-colors">Security Disclosures</a>
