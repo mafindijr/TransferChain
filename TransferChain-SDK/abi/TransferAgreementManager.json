@@ -1,0 +1,328 @@
+{
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "approveAgreement",
+      "inputs": [
+        {
+          "name": "agreementId_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "caller_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "createAgreement",
+      "inputs": [
+        {
+          "name": "listingId_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "buyer_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "seller_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "transferFee_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "signingBonus_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "sellOnPercentage_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "releaseClause_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "installmentAmount_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "appearanceBonus_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "goalBonus_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "metadataURI_",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "getAgreement",
+      "inputs": [
+        {
+          "name": "agreementId_",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct TransferAgreementManager.Agreement",
+          "components": [
+            {
+              "name": "id",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "listingId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "buyer",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "seller",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "status",
+              "type": "uint8",
+              "internalType": "enum TransferAgreementManager.AgreementStatus"
+            },
+            {
+              "name": "clauses",
+              "type": "tuple",
+              "internalType": "struct TransferAgreementManager.ClauseSet",
+              "components": [
+                {
+                  "name": "transferFee",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "signingBonus",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "sellOnPercentage",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "releaseClause",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "installmentAmount",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "appearanceBonus",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "goalBonus",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "medicalApprovalRequired",
+                  "type": "bool",
+                  "internalType": "bool"
+                },
+                {
+                  "name": "negotiationDeadline",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "agreementExpiration",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "metadataURI",
+                  "type": "string",
+                  "internalType": "string"
+                }
+              ]
+            },
+            {
+              "name": "buyerSigned",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "sellerSigned",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "createdAt",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "nextAgreementId",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "rejectAgreement",
+      "inputs": [
+        {
+          "name": "agreementId_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "caller_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "event",
+      "name": "AgreementApproved",
+      "inputs": [
+        {
+          "name": "agreementId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "AgreementCreated",
+      "inputs": [
+        {
+          "name": "agreementId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "listingId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "buyer",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "AgreementRejected",
+      "inputs": [
+        {
+          "name": "agreementId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "AgreementSigned",
+      "inputs": [
+        {
+          "name": "agreementId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "AgreementNotFound",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "InvalidAddress",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "InvalidMetadataURI",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "Unauthorized",
+      "inputs": []
+    }
+  ]
+}

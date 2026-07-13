@@ -31,7 +31,7 @@ export class TransferChain {
   private readonly logger: Logger;
   private readonly providerManager: ProviderManager;
   private readonly signerManager: SignerManager;
-  private readonly contractRegistry: ContractRegistry;
+  private readonly _contractRegistry: ContractRegistry;
   private destroyed = false;
 
   constructor(config: SdkConfig) {
@@ -48,7 +48,7 @@ export class TransferChain {
     );
 
     const deployment = config.deployment ?? BUILTIN_MANIFEST;
-    this.contractRegistry = new ContractRegistry(
+    this._contractRegistry = new ContractRegistry(
       config.chainId,
       deployment,
       this.providerManager,
