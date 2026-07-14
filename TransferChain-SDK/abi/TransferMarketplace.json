@@ -1,0 +1,355 @@
+{
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "cancelListing",
+      "inputs": [
+        {
+          "name": "listingId_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "caller_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "createListing",
+      "inputs": [
+        {
+          "name": "seller_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "playerId_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "clubId_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "price_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "metadataURI_",
+          "type": "string",
+          "internalType": "string"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "getListing",
+      "inputs": [
+        {
+          "name": "listingId_",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct TransferMarketplace.Listing",
+          "components": [
+            {
+              "name": "id",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "seller",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "playerId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "clubId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "price",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "metadataURI",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
+              "name": "status",
+              "type": "uint8",
+              "internalType": "enum TransferMarketplace.ListingStatus"
+            },
+            {
+              "name": "createdAt",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getOffer",
+      "inputs": [
+        {
+          "name": "listingId_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "buyer_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "internalType": "struct TransferMarketplace.Offer",
+          "components": [
+            {
+              "name": "listingId",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "buyer",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "status",
+              "type": "uint8",
+              "internalType": "enum TransferMarketplace.OfferStatus"
+            },
+            {
+              "name": "createdAt",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "makeOffer",
+      "inputs": [
+        {
+          "name": "listingId_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "buyer_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount_",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "nextListingId",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "rejectOffer",
+      "inputs": [
+        {
+          "name": "listingId_",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "buyer_",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "caller_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "event",
+      "name": "ListingCancelled",
+      "inputs": [
+        {
+          "name": "listingId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "seller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "ListingCreated",
+      "inputs": [
+        {
+          "name": "listingId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "seller",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "playerId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "price",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "OfferMade",
+      "inputs": [
+        {
+          "name": "listingId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "buyer",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "OfferRejected",
+      "inputs": [
+        {
+          "name": "listingId",
+          "type": "uint256",
+          "indexed": true,
+          "internalType": "uint256"
+        },
+        {
+          "name": "buyer",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "error",
+      "name": "InvalidAddress",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "InvalidMetadataURI",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "InvalidPrice",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ListingNotFound",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "OfferNotFound",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "Unauthorized",
+      "inputs": []
+    }
+  ]
+}
