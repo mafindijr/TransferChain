@@ -11,6 +11,10 @@ import { AccessControlClient } from "../contracts/access-control-client.js";
 import { ConfigClient } from "../contracts/config-client.js";
 import { PlayerRegistryClient } from "../contracts/player-registry-client.js";
 import { ClubRegistryClient } from "../contracts/club-registry-client.js";
+import { MarketplaceClient } from "../contracts/marketplace-client.js";
+import { AgreementClient } from "../contracts/agreement-client.js";
+import { EscrowClient } from "../contracts/escrow-client.js";
+import { TreasuryClient } from "../contracts/treasury-client.js";
 
 /**
  * The single entry point for all TransferChain SDK functionality.
@@ -45,6 +49,18 @@ export class TransferChain {
 
   /** Club entity management: registration, metadata, status. */
   readonly clubs: ClubRegistryClient;
+
+  /** Player transfer marketplace: listings and offers. */
+  readonly marketplace: MarketplaceClient;
+
+  /** Transfer agreements: creation, approval, rejection. */
+  readonly agreements: AgreementClient;
+
+  /** Escrow deposits: fund, release, refund. */
+  readonly escrow: EscrowClient;
+
+  /** Protocol treasury: token balances, deposits, withdrawals. */
+  readonly treasury: TreasuryClient;
 
   private readonly logger: Logger;
   private readonly providerManager: ProviderManager;
@@ -96,6 +112,26 @@ export class TransferChain {
     );
 
     this.clubs = new ClubRegistryClient(
+      this.registry,
+      this.transactionManager,
+    );
+
+    this.marketplace = new MarketplaceClient(
+      this.registry,
+      this.transactionManager,
+    );
+
+    this.agreements = new AgreementClient(
+      this.registry,
+      this.transactionManager,
+    );
+
+    this.escrow = new EscrowClient(
+      this.registry,
+      this.transactionManager,
+    );
+
+    this.treasury = new TreasuryClient(
       this.registry,
       this.transactionManager,
     );

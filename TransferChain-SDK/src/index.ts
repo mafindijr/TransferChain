@@ -8,9 +8,24 @@ export type { Abi } from "./abi/index.js";
 export type { TransactionResult } from "./types/transaction-result.js";
 export type { Player, RegisterPlayerParams } from "./types/player.js";
 export type { Club, RegisterClubParams } from "./types/club.js";
+export type {
+  Listing,
+  Offer,
+  CreateListingParams,
+  MakeOfferParams,
+} from "./types/marketplace.js";
+export type {
+  Agreement,
+  ClauseSet,
+  CreateAgreementParams,
+} from "./types/agreement.js";
+export type { Deposit, DepositParams } from "./types/escrow.js";
 
 export { PlayerStatus } from "./types/player.js";
 export { ClubStatus } from "./types/club.js";
+export { ListingStatus, OfferStatus } from "./types/marketplace.js";
+export { AgreementStatus } from "./types/agreement.js";
+export { DepositStatus } from "./types/escrow.js";
 export { SdkErrorCode } from "./errors/codes.js";
 export { TransferChainError } from "./errors/transfer-chain-error.js";
 export { ValidationError } from "./errors/validation-error.js";
@@ -44,3 +59,7 @@ export { AccessControlClient } from "./contracts/access-control-client.js";
 export { ConfigClient } from "./contracts/config-client.js";
 export { PlayerRegistryClient } from "./contracts/player-registry-client.js";
 export { ClubRegistryClient } from "./contracts/club-registry-client.js";
+export { MarketplaceClient } from "./contracts/marketplace-client.js";
+export { AgreementClient } from "./contracts/agreement-client.js";
+export { EscrowClient } from "./contracts/escrow-client.js";
+export { TreasuryClient } from "./contracts/treasury-client.js";
