@@ -28,6 +28,13 @@ export type {
 } from "./types/agreement.js";
 export type { Deposit, DepositParams } from "./types/escrow.js";
 export type {
+  TransferWorkflowParams,
+  TransferWorkflowResult,
+  ListingWorkflowParams,
+  PlayerRegistrationWorkflowParams,
+  ClubRegistrationWorkflowParams,
+} from "./workflows/types.js";
+export type {
   ContractEventMap,
   ContractEventName,
   SubscriptionOptions,
@@ -81,3 +88,4 @@ export { EventManager } from "./events/event-manager.js";
 export { MetadataResolver } from "./metadata/metadata-resolver.js";
 export { IpfsProtocol } from "./metadata/protocols/ipfs.js";
 export { HttpProtocol } from "./metadata/protocols/http.js";
+export { WorkflowsClient } from "./workflows/workflows-client.js";

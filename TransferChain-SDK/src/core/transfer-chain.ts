@@ -19,6 +19,7 @@ import { EventManager } from "../events/event-manager.js";
 import { MetadataResolver } from "../metadata/metadata-resolver.js";
 import { IpfsProtocol } from "../metadata/protocols/ipfs.js";
 import { HttpProtocol } from "../metadata/protocols/http.js";
+import { WorkflowsClient } from "../workflows/workflows-client.js";
 
 /**
  * The single entry point for all TransferChain SDK functionality.
@@ -71,6 +72,9 @@ export class TransferChain {
 
   /** Metadata resolver: off-chain metadata URI resolution. */
   readonly metadata: MetadataResolver;
+
+  /** High-level workflows: transfer, listing, registration. */
+  readonly workflows: WorkflowsClient;
 
   private readonly logger: Logger;
   private readonly providerManager: ProviderManager;
@@ -164,6 +168,14 @@ export class TransferChain {
       cacheTtl: config.metadata?.cacheTtl,
       cacheMaxSize: config.metadata?.cacheMaxSize,
     });
+
+    this.workflows = new WorkflowsClient(
+      this.agreements,
+      this.escrow,
+      this.marketplace,
+      this.players,
+      this.clubs,
+    );
 
     this.logger.info("SDK initialized", {
       chainId: config.chainId,
