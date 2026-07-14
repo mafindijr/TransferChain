@@ -1,6 +1,13 @@
 export type { SdkConfig } from "./types/config.js";
 export type { TransactionDefaults } from "./types/transaction.js";
-export type { MetadataConfig, ProtocolHandler } from "./types/metadata.js";
+export type {
+  MetadataConfig,
+  ProtocolHandler,
+  ResolveOptions,
+  MetadataContent,
+  PlayerProfile,
+  ClubProfile,
+} from "./types/metadata.js";
 export type { ChainDeployment, DeploymentManifest } from "./types/deployment.js";
 export type { ChainMetadata } from "./types/chain.js";
 export type { Logger } from "./logger/types.js";
@@ -20,6 +27,13 @@ export type {
   CreateAgreementParams,
 } from "./types/agreement.js";
 export type { Deposit, DepositParams } from "./types/escrow.js";
+export type {
+  ContractEventMap,
+  ContractEventName,
+  SubscriptionOptions,
+  QueryOptions,
+  DecodedEvent,
+} from "./events/types.js";
 
 export { PlayerStatus } from "./types/player.js";
 export { ClubStatus } from "./types/club.js";
@@ -63,3 +77,7 @@ export { MarketplaceClient } from "./contracts/marketplace-client.js";
 export { AgreementClient } from "./contracts/agreement-client.js";
 export { EscrowClient } from "./contracts/escrow-client.js";
 export { TreasuryClient } from "./contracts/treasury-client.js";
+export { EventManager } from "./events/event-manager.js";
+export { MetadataResolver } from "./metadata/metadata-resolver.js";
+export { IpfsProtocol } from "./metadata/protocols/ipfs.js";
+export { HttpProtocol } from "./metadata/protocols/http.js";

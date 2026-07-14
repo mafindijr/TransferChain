@@ -15,6 +15,10 @@ import { MarketplaceClient } from "../contracts/marketplace-client.js";
 import { AgreementClient } from "../contracts/agreement-client.js";
 import { EscrowClient } from "../contracts/escrow-client.js";
 import { TreasuryClient } from "../contracts/treasury-client.js";
+import { EventManager } from "../events/event-manager.js";
+import { MetadataResolver } from "../metadata/metadata-resolver.js";
+import { IpfsProtocol } from "../metadata/protocols/ipfs.js";
+import { HttpProtocol } from "../metadata/protocols/http.js";
 
 /**
  * The single entry point for all TransferChain SDK functionality.
@@ -61,6 +65,12 @@ export class TransferChain {
 
   /** Protocol treasury: token balances, deposits, withdrawals. */
   readonly treasury: TreasuryClient;
+
+  /** Event system: live subscriptions, historical queries. */
+  readonly events: EventManager;
+
+  /** Metadata resolver: off-chain metadata URI resolution. */
+  readonly metadata: MetadataResolver;
 
   private readonly logger: Logger;
   private readonly providerManager: ProviderManager;
@@ -136,6 +146,25 @@ export class TransferChain {
       this.transactionManager,
     );
 
+    this.events = new EventManager(
+      this.providerManager.getProvider(),
+      this.registry,
+      this.logger,
+    );
+
+    const metadataProtocols = config.metadata?.protocols ?? [];
+    const ipfsGateway = config.metadata?.ipfsGateway;
+    this.metadata = new MetadataResolver({
+      protocols: [
+        ...metadataProtocols,
+        new IpfsProtocol({ gateway: ipfsGateway }),
+        new HttpProtocol({ scheme: "https" }),
+        new HttpProtocol({ scheme: "http" }),
+      ],
+      cacheTtl: config.metadata?.cacheTtl,
+      cacheMaxSize: config.metadata?.cacheMaxSize,
+    });
+
     this.logger.info("SDK initialized", {
       chainId: config.chainId,
     });
@@ -160,6 +189,7 @@ export class TransferChain {
    */
   destroy(): void {
     this.destroyed = true;
+    this.events.destroy();
     this.logger.info("SDK destroyed");
   }
 
