@@ -1,0 +1,10 @@
+src/
+tests/
+tsconfig.json
+vitest.config.ts
+tsup.config.ts
+eslint.config.js
+.prettierrc
+.gitignore
+docs/
+scripts/
