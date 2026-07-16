@@ -1,0 +1,48 @@
+{
+  "chainId": 1439,
+  "network": "injective-testnet",
+  "deployer": "0x63f3ec1922317e3bd13d48739d7dfa0784490497",
+  "deployedAt": "2026-07-15",
+  "contracts": {
+    "TransferChainAccessControl": {
+      "address": "0x4ce4ac389cdb84c4e5cea2d0e9e65f1ecc8b87e5",
+      "txHash": "0xb8501f1cd94948145124913ac1064d276a5526cd6ea1971680bba320ff207718"
+    },
+    "Treasury": {
+      "address": "0x0ea50ae90ed69bd029cc3e3cffce21f6e1e0b9bc",
+      "txHash": "0x950fce8b1ea966f2d4125f455a7d1a5403e58e34aa052e9c9e21af8fb204ade8"
+    },
+    "TransferChainConfig": {
+      "address": "0xf0f67e6578e44230924bffd02ae94090136608f1",
+      "txHash": "0x8fef3a52381d0d671e0de50142704ba0f2e9697be3b5a314e7adefc2b0d3259b",
+      "constructorArgs": {
+        "treasury": "0x0ea50ae90ed69bd029cc3e3cffce21f6e1e0b9bc",
+        "marketplaceFeeBps": 250,
+        "protocolVersion": 1
+      }
+    },
+    "PlayerRegistry": {
+      "address": "0x49335199e4121fc332cb5b11ce704250dea92cc8",
+      "txHash": "0xca716945b64f66193c6ce061becbfad9ad28148b410026e294113a1b0e2074c7"
+    },
+    "ClubRegistry": {
+      "address": "0x873ae71139407889650b74b24da51643a0e680eb",
+      "txHash": "0xe54799b06ec235aca58fdbfe8dc3aa1efa3763be5ddf4db329f70f2e116d70dd"
+    },
+    "TransferMarketplace": {
+      "address": "0x6bc6dd2cc4f5c2c1ab6b0387ed95ec5b543eef1a",
+      "txHash": "0x24d7fd4acbcf0e4debe3b88f9aaa6410a3c31e76261b3c70a2ebeb5173324094"
+    },
+    "TransferAgreementManager": {
+      "address": "0x4e9865d82174376b1246e982311d85b8cc1297f8",
+      "txHash": "0x6ff599a8937c11e8d0c9e52fa6f0c82145c09301afaa43bc17eb6b52857ce18e"
+    },
+    "Escrow": {
+      "address": "0xded509f4c002e4013e96cec6b3ad87bf5213c68d",
+      "txHash": "0xc08b4cf1df36186dcb083ae25bedd3746782f3a624b6fb7381d70dd0cd8cb195"
+    }
+  },
+  "roles": {
+    "admin": "0x63f3ec1922317e3bd13d48739d7dfa0784490497"
+  }
+}

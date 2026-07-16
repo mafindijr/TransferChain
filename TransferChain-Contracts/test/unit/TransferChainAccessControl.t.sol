@@ -25,22 +25,6 @@ contract TransferChainAccessControlTest is Test {
         assertFalse(accessControl.hasRole(REGISTRY_ADMIN_ROLE, user));
     }
 
-    function testRestrictedFunctionRequiresRole() public {
-        address user = address(0xCAFE);
-        accessControl.grantRole(REGISTRY_ADMIN_ROLE, user);
-
-        vm.prank(user);
-        accessControl.restrictedAction();
-    }
-
-    function testRestrictedFunctionRevertsWithoutRole() public {
-        address user = address(0xDEAD);
-
-        vm.prank(user);
-        vm.expectRevert();
-        accessControl.restrictedAction();
-    }
-
     function testPauseRoleCanPauseAndUnpause() public {
         address user = address(0x1234);
         accessControl.grantRole(PAUSER_ROLE, user);

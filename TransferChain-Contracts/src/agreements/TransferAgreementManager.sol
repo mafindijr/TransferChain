@@ -57,6 +57,17 @@ contract TransferAgreementManager {
     }
 
     /// @notice Creates a new transfer agreement.
+    /// @param listingId_ The marketplace listing identifier.
+    /// @param buyer_ The buyer address.
+    /// @param seller_ The seller address.
+    /// @param transferFee_ The transfer fee amount.
+    /// @param signingBonus_ The signing bonus amount.
+    /// @param sellOnPercentage_ The sell-on percentage.
+    /// @param releaseClause_ The release clause amount.
+    /// @param installmentAmount_ The installment amount.
+    /// @param appearanceBonus_ The appearance bonus amount.
+    /// @param goalBonus_ The goal bonus amount.
+    /// @param metadataUri_ URI to off-chain agreement metadata.
     function createAgreement(
         uint256 listingId_,
         address buyer_,

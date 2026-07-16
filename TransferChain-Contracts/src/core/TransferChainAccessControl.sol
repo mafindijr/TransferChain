@@ -44,11 +44,6 @@ contract TransferChainAccessControl is AccessControl, Pausable {
         _unpause();
     }
 
-    /// @notice Example restricted action for role-based enforcement.
-    function restrictedAction() external whenNotPaused onlyRole(REGISTRY_ADMIN_ROLE) {
-        // Intentionally empty.
-    }
-
     /// @notice Returns whether the contract is currently paused.
     /// @return True if paused, false otherwise.
     function isPaused() external view returns (bool) {

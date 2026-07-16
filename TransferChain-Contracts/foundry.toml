@@ -4,4 +4,10 @@ out = "out"
 libs = ["lib"]
 via_ir = true
 
+[rpc_endpoints]
+injective_testnet = "${RPC_URL}"
+
+[etherscan]
+injective_testnet = { key = "${EXPLORER_API_KEY}", url = "https://explorer.testnet.injective.network/api" }
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
