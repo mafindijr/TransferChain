@@ -5,6 +5,7 @@ import {
   ContractError,
   ProviderError,
   TransactionError,
+  ChainMismatchError,
   SdkErrorCode,
 } from "../../../src/errors/index.js";
 
@@ -127,6 +128,28 @@ describe("TransactionError", () => {
       "estimation failed",
     );
     expect(error.txHash).toBeUndefined();
+  });
+});
+
+describe("ChainMismatchError", () => {
+  it("should set expected and actual chain IDs", () => {
+    const error = new ChainMismatchError(1439, 1);
+    expect(error.name).toBe("ChainMismatchError");
+    expect(error.code).toBe("CHAIN_MISMATCH");
+    expect(error.message).toBe("Expected chain 1439, got 1");
+    expect(error.context).toEqual({ expectedChainId: 1439, actualChainId: 1 });
+  });
+
+  it("should be instanceof TransferChainError", () => {
+    const error = new ChainMismatchError(1439, 525);
+    expect(error).toBeInstanceOf(TransferChainError);
+    expect(error).toBeInstanceOf(Error);
+  });
+
+  it("should serialize chain mismatch details to JSON", () => {
+    const error = new ChainMismatchError(1439, 8888);
+    const json = error.toJSON();
+    expect(json.context).toEqual({ expectedChainId: 1439, actualChainId: 8888 });
   });
 });
 

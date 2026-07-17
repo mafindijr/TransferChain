@@ -9,7 +9,7 @@ import { ValidationError } from "../../../src/errors/validation-error.js";
 describe("validateConfig", () => {
   it("should pass for a valid config", () => {
     expect(() =>
-      validateConfig({ chainId: 8888, rpcUrl: "https://evm.injective.network" }),
+      validateConfig({ chainId: 1439, rpcUrl: "https://k8s.testnet.json-rpc.injective.network" }),
     ).not.toThrow();
   });
 
@@ -23,39 +23,39 @@ describe("validateConfig", () => {
   });
 
   it("should throw for empty rpcUrl", () => {
-    expect(() => validateConfig({ chainId: 8888, rpcUrl: "" })).toThrow(ValidationError);
-    expect(() => validateConfig({ chainId: 8888, rpcUrl: "   " })).toThrow(
+    expect(() => validateConfig({ chainId: 1439, rpcUrl: "" })).toThrow(ValidationError);
+    expect(() => validateConfig({ chainId: 1439, rpcUrl: "   " })).toThrow(
       ValidationError,
     );
   });
 
   it("should throw for invalid URL", () => {
     expect(() =>
-      validateConfig({ chainId: 8888, rpcUrl: "not-a-url" }),
+      validateConfig({ chainId: 1439, rpcUrl: "not-a-url" }),
     ).toThrow(ValidationError);
   });
 
   it("should throw for invalid protocol", () => {
     expect(() =>
-      validateConfig({ chainId: 8888, rpcUrl: "ftp://example.com" }),
+      validateConfig({ chainId: 1439, rpcUrl: "ftp://example.com" }),
     ).toThrow(ValidationError);
   });
 
   it("should accept http protocol", () => {
     expect(() =>
-      validateConfig({ chainId: 8888, rpcUrl: "http://localhost:8545" }),
+      validateConfig({ chainId: 1439, rpcUrl: "http://localhost:8545" }),
     ).not.toThrow();
   });
 
   it("should accept ws protocol", () => {
     expect(() =>
-      validateConfig({ chainId: 8888, rpcUrl: "ws://localhost:8545" }),
+      validateConfig({ chainId: 1439, rpcUrl: "ws://localhost:8545" }),
     ).not.toThrow();
   });
 
   it("should accept wss protocol", () => {
     expect(() =>
-      validateConfig({ chainId: 8888, rpcUrl: "wss://example.com" }),
+      validateConfig({ chainId: 1439, rpcUrl: "wss://example.com" }),
     ).not.toThrow();
   });
 });
@@ -63,7 +63,7 @@ describe("validateConfig", () => {
 describe("resolveDeploymentAddress", () => {
   it("should return user-provided address when available", () => {
     const userManifest = {
-      8888: {
+      1439: {
         transferChainAccessControl: "0x1111111111111111111111111111111111111111",
         transferChainConfig: "0x2222222222222222222222222222222222222222",
         playerRegistry: "0x3333333333333333333333333333333333333333",
@@ -76,7 +76,7 @@ describe("resolveDeploymentAddress", () => {
     };
 
     const address = resolveDeploymentAddress(
-      8888,
+      1439,
       "playerRegistry",
       userManifest,
     );
@@ -84,7 +84,7 @@ describe("resolveDeploymentAddress", () => {
   });
 
   it("should fall back to built-in manifest", () => {
-    const address = resolveDeploymentAddress(8888, "playerRegistry");
+    const address = resolveDeploymentAddress(1439, "playerRegistry");
     expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/);
   });
 
@@ -97,7 +97,7 @@ describe("resolveDeploymentAddress", () => {
   it("should prefer user manifest over built-in", () => {
     const userAddress = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
     const userManifest = {
-      8888: {
+      1439: {
         transferChainAccessControl: userAddress,
         transferChainConfig: "0x0000000000000000000000000000000000000000",
         playerRegistry: "0x0000000000000000000000000000000000000000",
@@ -110,7 +110,7 @@ describe("resolveDeploymentAddress", () => {
     };
 
     const address = resolveDeploymentAddress(
-      8888,
+      1439,
       "transferChainAccessControl",
       userManifest,
     );

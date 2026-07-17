@@ -10,7 +10,7 @@ function makeProviderManager(config: SdkConfig): ProviderManager {
 
 describe("SignerManager", () => {
   it("should operate in read-only mode when no signer or privateKey", () => {
-    const config = { chainId: 8888, rpcUrl: "https://evm.testnet.injective.network" };
+    const config = { chainId: 1439, rpcUrl: "https://k8s.testnet.json-rpc.injective.network" };
     const pm = makeProviderManager(config);
     const sm = new SignerManager(config, pm, silentLogger);
 
@@ -21,8 +21,8 @@ describe("SignerManager", () => {
   it("should use a pre-built signer when provided", () => {
     const mockSigner = { _isSigner: true } as unknown as import("ethers").Signer;
     const config = {
-      chainId: 8888,
-      rpcUrl: "https://evm.testnet.injective.network",
+      chainId: 1439,
+      rpcUrl: "https://k8s.testnet.json-rpc.injective.network",
       signer: mockSigner,
     };
     const pm = makeProviderManager(config);
@@ -35,8 +35,8 @@ describe("SignerManager", () => {
   it("should prefer pre-built signer over privateKey", () => {
     const mockSigner = { _isSigner: true } as unknown as import("ethers").Signer;
     const config = {
-      chainId: 8888,
-      rpcUrl: "https://evm.testnet.injective.network",
+      chainId: 1439,
+      rpcUrl: "https://k8s.testnet.json-rpc.injective.network",
       signer: mockSigner,
       privateKey: "0x0000000000000000000000000000000000000000000000000000000000000001",
     };
@@ -49,8 +49,8 @@ describe("SignerManager", () => {
   it("should create a Wallet from privateKey", () => {
     // Use a valid 32-byte hex key (not a real one, but valid format)
     const config = {
-      chainId: 8888,
-      rpcUrl: "https://evm.testnet.injective.network",
+      chainId: 1439,
+      rpcUrl: "https://k8s.testnet.json-rpc.injective.network",
       privateKey:
         "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
     };

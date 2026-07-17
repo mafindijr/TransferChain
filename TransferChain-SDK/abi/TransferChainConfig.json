@@ -364,11 +364,6 @@
     },
     {
       "type": "error",
-      "name": "NotAuthorized",
-      "inputs": []
-    },
-    {
-      "type": "error",
       "name": "OwnableInvalidOwner",
       "inputs": [
         {

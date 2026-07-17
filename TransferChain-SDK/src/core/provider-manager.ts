@@ -2,6 +2,7 @@ import { ethers } from "ethers";
 import type { SdkConfig } from "../types/config.js";
 import type { Logger } from "../logger/types.js";
 import { ProviderError } from "../errors/provider-error.js";
+import { ChainMismatchError } from "../errors/chain-mismatch-error.js";
 import { SdkErrorCode } from "../errors/codes.js";
 
 /**
@@ -104,10 +105,7 @@ export class ProviderManager {
     const actualChainId = Number(network.chainId);
 
     if (actualChainId !== this.chainId) {
-      throw new ProviderError(
-        SdkErrorCode.CHAIN_MISMATCH,
-        `Expected chain ${this.chainId}, got ${actualChainId}`,
-      );
+      throw new ChainMismatchError(this.chainId, actualChainId);
     }
   }
 

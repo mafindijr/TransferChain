@@ -26,8 +26,8 @@ pnpm add @transferchain/sdk
 import { TransferChain } from "@transferchain/sdk";
 
 const tc = new TransferChain({
-  chainId: 8888,
-  rpcUrl: "https://evm.injective.network",
+  chainId: 1439,
+  rpcUrl: "https://k8s.testnet.json-rpc.injective.network",
   privateKey: "0x...",
 });
 
