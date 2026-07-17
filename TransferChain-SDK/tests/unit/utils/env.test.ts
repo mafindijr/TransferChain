@@ -13,19 +13,19 @@ describe("fromEnv", () => {
   });
 
   it("should load config from environment variables", () => {
-    process.env.TRANSFERCHAIN_CHAIN_ID = "8888";
-    process.env.TRANSFERCHAIN_RPC_URL = "https://evm.testnet.injective.network";
+    process.env.TRANSFERCHAIN_CHAIN_ID = "1439";
+    process.env.TRANSFERCHAIN_RPC_URL = "https://k8s.testnet.json-rpc.injective.network";
     process.env.TRANSFERCHAIN_PRIVATE_KEY = "0xsecret";
 
     const config = fromEnv();
-    expect(config.chainId).toBe(8888);
-    expect(config.rpcUrl).toBe("https://evm.testnet.injective.network");
+    expect(config.chainId).toBe(1439);
+    expect(config.rpcUrl).toBe("https://k8s.testnet.json-rpc.injective.network");
     expect(config.privateKey).toBe("0xsecret");
   });
 
   it("should omit privateKey when not set", () => {
-    process.env.TRANSFERCHAIN_CHAIN_ID = "8888";
-    process.env.TRANSFERCHAIN_RPC_URL = "https://evm.testnet.injective.network";
+    process.env.TRANSFERCHAIN_CHAIN_ID = "1439";
+    process.env.TRANSFERCHAIN_RPC_URL = "https://k8s.testnet.json-rpc.injective.network";
     delete process.env.TRANSFERCHAIN_PRIVATE_KEY;
 
     const config = fromEnv();
@@ -40,7 +40,7 @@ describe("fromEnv", () => {
   });
 
   it("should throw when TRANSFERCHAIN_RPC_URL is missing", () => {
-    process.env.TRANSFERCHAIN_CHAIN_ID = "8888";
+    process.env.TRANSFERCHAIN_CHAIN_ID = "1439";
     delete process.env.TRANSFERCHAIN_RPC_URL;
 
     expect(() => fromEnv()).toThrow("TRANSFERCHAIN_RPC_URL");

@@ -20,7 +20,7 @@
 The `TransferChain` class is the single entry point for all SDK functionality. All domain clients are accessible as properties:
 
 ```typescript
-const tc = new TransferChain({ chainId: 8888, rpcUrl: "..." });
+const tc = new TransferChain({ chainId: 1439, rpcUrl: "..." });
 
 // Domain clients as properties
 tc.players      // PlayerRegistryClient

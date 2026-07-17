@@ -4,8 +4,8 @@ import { TransferChain } from "../../../src/core/transfer-chain.js";
 import { ValidationError } from "../../../src/errors/validation-error.js";
 
 const VALID_CONFIG = {
-  chainId: 8888,
-  rpcUrl: "https://evm.testnet.injective.network",
+  chainId: 1439,
+  rpcUrl: "https://k8s.testnet.json-rpc.injective.network",
 };
 
 describe("TransferChain", () => {
@@ -18,7 +18,7 @@ describe("TransferChain", () => {
 
     it("should set chainId from config", () => {
       const tc = new TransferChain(VALID_CONFIG);
-      expect(tc.chainId).toBe(8888);
+      expect(tc.chainId).toBe(1439);
       tc.destroy();
     });
 
@@ -36,7 +36,7 @@ describe("TransferChain", () => {
       expect(
         () =>
           new TransferChain({
-            chainId: 8888,
+            chainId: 1439,
             rpcUrl: "",
           }),
       ).toThrow(ValidationError);
@@ -46,7 +46,7 @@ describe("TransferChain", () => {
       expect(
         () =>
           new TransferChain({
-            chainId: 8888,
+            chainId: 1439,
             rpcUrl: "not-a-url",
           }),
       ).toThrow(ValidationError);
@@ -112,7 +112,7 @@ describe("TransferChain", () => {
   describe("immutability", () => {
     it("should have chainId as a readonly property", () => {
       const tc = new TransferChain(VALID_CONFIG);
-      expect(tc.chainId).toBe(8888);
+      expect(tc.chainId).toBe(1439);
       tc.destroy();
     });
   });

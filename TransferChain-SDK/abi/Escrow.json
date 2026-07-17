@@ -115,11 +115,6 @@
           "name": "depositId_",
           "type": "uint256",
           "internalType": "uint256"
-        },
-        {
-          "name": "caller_",
-          "type": "address",
-          "internalType": "address"
         }
       ],
       "outputs": [],
@@ -133,11 +128,6 @@
           "name": "depositId_",
           "type": "uint256",
           "internalType": "uint256"
-        },
-        {
-          "name": "caller_",
-          "type": "address",
-          "internalType": "address"
         }
       ],
       "outputs": [],

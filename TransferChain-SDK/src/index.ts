@@ -53,6 +53,7 @@ export { ValidationError } from "./errors/validation-error.js";
 export { ContractError } from "./errors/contract-error.js";
 export { ProviderError } from "./errors/provider-error.js";
 export { TransactionError } from "./errors/transaction-error.js";
+export { ChainMismatchError } from "./errors/chain-mismatch-error.js";
 export { silentLogger } from "./logger/silent-logger.js";
 export { BUILTIN_MANIFEST } from "./constants/manifest.js";
 export { CHAIN_REGISTRY } from "./constants/chains.js";
