@@ -33,58 +33,179 @@ export default function Marketplace() {
   const [loading, setLoading] = useState(true);
   const [filterPosition, setFilterPosition] = useState("All");
 
-  const loadLocalStoragePlayers = () => {
-    if (typeof window !== "undefined") {
-      const storedPlayers = localStorage.getItem("tc_players");
-      if (storedPlayers) {
-        const localPlayers = JSON.parse(storedPlayers);
-        
-        // Fetch listings from local storage as well to see if any are listed for sale
-        const storedListings = localStorage.getItem("tc_listings");
-        const currentListings = storedListings ? JSON.parse(storedListings) : [];
-        const listingsMap = new Map(currentListings.map((l: any) => [Number(l.playerId), l]));
+  const fetchOnChainById = async () => {
+    if (!publicClient) return;
 
-        const mappedLocal = localPlayers.map((p: any) => {
-          const listing = listingsMap.get(Number(p.id));
-          
-          // Presets for graphics
-          let imageURI = p.imageURI || `/img/soccer/soccer-${(p.id % 4) + 1}.jpg`;
-          const cleanName = (p.name || "").toLowerCase();
-          if (cleanName.includes("mbapp")) imageURI = "/img/players/Mbappe.jpg";
-          else if (cleanName.includes("haaland")) imageURI = "/img/players/Haaland.png";
-          else if (cleanName.includes("bellingham")) imageURI = "/img/players/Jude.png";
-          else if (cleanName.includes("musiala")) imageURI = "/img/players/Musiala.jpg";
+    try {
+      setLoading(true);
 
-          return {
-            id: p.id,
-            owner: p.owner,
-            name: p.name,
-            metadataURI: p.metadataURI,
-            position: p.position || "Forward",
-            age: p.age || 22,
-            nationality: p.nationality || "Injective",
-            imageURI: imageURI,
-            status: p.status || "Active",
-            txHash: p.txHash || "0x" + Math.random().toString(16).substring(2, 8) + "..." + Math.random().toString(16).substring(2, 6),
-            blockNumber: p.blockNumber || 1550231,
-            listing: listing ? {
-              listingId: listing.id,
-              price: BigInt(listing.price),
-              seller: listing.seller
-            } : null
-          };
-        });
-        setPlayers(mappedLocal);
-      } else {
-        setPlayers([]);
+      // 1. Fetch nextPlayerId from PlayerRegistry contract
+      const nextId = await publicClient.readContract({
+        address: "0x49335199e4121fc332cb5b11ce704250dea92cc8",
+        abi: playerRegistryAbi,
+        functionName: "nextPlayerId"
+      }) as bigint;
+
+      const totalPlayers = Number(nextId) - 1;
+      
+      // 2. Fetch nextListingId and active listings from TransferMarketplace contract
+      let activeListings = new Map<number, { listingId: number; price: bigint; seller: string }>();
+      try {
+        const nextLId = await publicClient.readContract({
+          address: "0x6bc6dd2cc4f5c2c1ab6b0387ed95ec5b543eef1a",
+          abi: [
+            {
+              "type": "function",
+              "name": "nextListingId",
+              "inputs": [],
+              "outputs": [{"name": "", "type": "uint256", "internalType": "uint256"}],
+              "stateMutability": "view"
+            }
+          ],
+          functionName: "nextListingId"
+        }) as bigint;
+
+        const totalListings = Number(nextLId) - 1;
+        for (let i = 1; i <= totalListings; i++) {
+          try {
+            const listing = await publicClient.readContract({
+              address: "0x6bc6dd2cc4f5c2c1ab6b0387ed95ec5b543eef1a",
+              abi: [
+                {
+                  "type": "function",
+                  "name": "getListing",
+                  "inputs": [{"name": "listingId_", "type": "uint256", "internalType": "uint256"}],
+                  "outputs": [
+                    {
+                      "name": "",
+                      "type": "tuple",
+                      "internalType": "struct TransferMarketplace.Listing",
+                      "components": [
+                        {"name": "id", "type": "uint256", "internalType": "uint256"},
+                        {"name": "seller", "type": "address", "internalType": "address"},
+                        {"name": "playerId", "type": "uint256", "internalType": "uint256"},
+                        {"name": "clubId", "type": "uint256", "internalType": "uint256"},
+                        {"name": "price", "type": "uint256", "internalType": "uint256"},
+                        {"name": "metadataURI", "type": "string", "internalType": "string"},
+                        {"name": "status", "type": "uint8", "internalType": "uint8"},
+                        {"name": "createdAt", "type": "uint256", "internalType": "uint256"}
+                      ]
+                    }
+                  ],
+                  "stateMutability": "view"
+                }
+              ],
+              functionName: "getListing",
+              args: [BigInt(i)]
+            }) as any;
+
+            if (listing && Number(listing.status) === 0) { // Active = 0
+              activeListings.set(Number(listing.playerId), {
+                listingId: Number(listing.id),
+                price: BigInt(listing.price),
+                seller: listing.seller
+              });
+            }
+          } catch (err) {
+            console.error(`Error loading listing ${i} by ID:`, err);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading nextListingId:", err);
       }
+
+      // 3. Batch query player details by ID
+      const fetchedPlayers: PlayerListing[] = [];
+      for (let i = 1; i <= totalPlayers; i++) {
+        try {
+          const ownerAddress = await publicClient.readContract({
+            address: "0x49335199e4121fc332cb5b11ce704250dea92cc8",
+            abi: playerRegistryAbi,
+            functionName: "getPlayerOwner",
+            args: [BigInt(i)]
+          }) as string;
+
+          if (ownerAddress && ownerAddress !== "0x0000000000000000000000000000000000000000") {
+            const onChainPlayer = await publicClient.readContract({
+              address: "0x49335199e4121fc332cb5b11ce704250dea92cc8",
+              abi: playerRegistryAbi,
+              functionName: "getPlayer",
+              args: [ownerAddress]
+            }) as any;
+
+            if (onChainPlayer) {
+              const name = onChainPlayer.name || "Unknown Player";
+              const status = onChainPlayer.status === 0 ? "Active" : onChainPlayer.status === 1 ? "Suspended" : "Inactive";
+              const metadataURI = onChainPlayer.metadataURI || "";
+
+              let position = "Forward";
+              let age = 22;
+              let nationality = "Injective";
+              let imageURI = `/img/soccer/soccer-${(i % 4) + 1}.jpg`;
+
+              const cleanName = name.toLowerCase();
+              if (cleanName.includes("mbapp")) {
+                position = "Forward";
+                age = 27;
+                nationality = "France";
+                imageURI = "/img/players/Mbappe.jpg";
+              } else if (cleanName.includes("haaland")) {
+                position = "Striker";
+                age = 25;
+                nationality = "Norway";
+                imageURI = "/img/players/Haaland.png";
+              } else if (cleanName.includes("bellingham")) {
+                position = "Midfielder";
+                age = 23;
+                nationality = "England";
+                imageURI = "/img/players/Jude.png";
+              } else if (cleanName.includes("musiala")) {
+                position = "Playmaker";
+                age = 23;
+                nationality = "Germany";
+                imageURI = "/img/players/Musiala.jpg";
+              } else if (cleanName.includes("saka")) {
+                position = "Winger";
+                age = 24;
+                nationality = "England";
+                imageURI = "/img/soccer/soccer-1.jpg";
+              }
+
+              const listing = activeListings.get(i);
+
+              fetchedPlayers.push({
+                id: i,
+                owner: ownerAddress,
+                name,
+                metadataURI,
+                position,
+                age,
+                nationality,
+                imageURI,
+                status,
+                txHash: "Direct Contract Read",
+                blockNumber: 0,
+                listing: listing || null
+              });
+            }
+          }
+        } catch (err) {
+          console.error(`Error loading player index ${i} by ID:`, err);
+        }
+      }
+
+      setPlayers(fetchedPlayers);
+    } catch (err) {
+      console.error("Direct contract query failed:", err);
+      setPlayers([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     async function scrapeEventLogs() {
       if (!publicClient) {
-        loadLocalStoragePlayers();
         setLoading(false);
         return;
       }
@@ -92,41 +213,56 @@ export default function Marketplace() {
       try {
         setLoading(true);
 
-        // 1. Scrape PlayerRegistered logs from PlayerRegistry contract
-        const playerLogs = await publicClient.getLogs({
-          address: "0x49335199e4121fc332cb5b11ce704250dea92cc8",
-          event: {
-            type: "event",
-            name: "PlayerRegistered",
-            inputs: [
-              { indexed: true, name: "owner", type: "address" },
-              { indexed: true, name: "playerId", type: "uint256" },
-              { indexed: false, name: "metadataURI", type: "string" }
-            ]
-          },
-          fromBlock: 0n
-        });
+        // Fetch current block height to enforce the 10,000 block search range limit of Injective RPC
+        const currentBlock = await publicClient.getBlockNumber();
+        const safeFromBlock = currentBlock > 9500n ? currentBlock - 9500n : 0n;
+
+        let playerLogs = [];
+        try {
+          // 1. Scrape PlayerRegistered logs from PlayerRegistry contract (within safe block range)
+          playerLogs = await publicClient.getLogs({
+            address: "0x49335199e4121fc332cb5b11ce704250dea92cc8",
+            event: {
+              type: "event",
+              name: "PlayerRegistered",
+              inputs: [
+                { indexed: true, name: "owner", type: "address" },
+                { indexed: true, name: "playerId", type: "uint256" },
+                { indexed: false, name: "metadataURI", type: "string" }
+              ]
+            },
+            fromBlock: safeFromBlock
+          });
+        } catch (logsErr) {
+          console.warn("Failed to scrape PlayerRegistered logs, falling back to direct ID queries:", logsErr);
+        }
 
         if (playerLogs.length === 0) {
-          loadLocalStoragePlayers();
+          // Fall back directly to contract iteration by ID to read historical data outside 10k blocks range
+          await fetchOnChainById();
           return;
         }
 
-        // 2. Scrape ListingCreated logs from TransferMarketplace contract
-        const listingLogs = await publicClient.getLogs({
-          address: "0x6bc6dd2cc4f5c2c1ab6b0387ed95ec5b543eef1a",
-          event: {
-            type: "event",
-            name: "ListingCreated",
-            inputs: [
-              { indexed: true, name: "listingId", type: "uint256" },
-              { indexed: true, name: "seller", type: "address" },
-              { indexed: true, name: "playerId", type: "uint256" },
-              { indexed: false, name: "price", type: "uint256" }
-            ]
-          },
-          fromBlock: 0n
-        });
+        let listingLogs = [];
+        try {
+          // 2. Scrape ListingCreated logs from TransferMarketplace contract (within safe block range)
+          listingLogs = await publicClient.getLogs({
+            address: "0x6bc6dd2cc4f5c2c1ab6b0387ed95ec5b543eef1a",
+            event: {
+              type: "event",
+              name: "ListingCreated",
+              inputs: [
+                { indexed: true, name: "listingId", type: "uint256" },
+                { indexed: true, name: "seller", type: "address" },
+                { indexed: true, name: "playerId", type: "uint256" },
+                { indexed: false, name: "price", type: "uint256" }
+              ]
+            },
+            fromBlock: safeFromBlock
+          });
+        } catch (listingsErr) {
+          console.warn("Failed to scrape ListingCreated logs, using default listings mapper:", listingsErr);
+        }
 
         // Map listings by Player ID for easy cross-referencing
         const activeListings = new Map<number, { listingId: number; price: bigint; seller: string }>();
@@ -224,8 +360,8 @@ export default function Marketplace() {
 
         setPlayers(parsedPlayers);
       } catch (err) {
-        console.error("Error fetching logs:", err);
-        loadLocalStoragePlayers();
+        console.error("Error fetching logs, trying direct query fallback:", err);
+        await fetchOnChainById();
       } finally {
         setLoading(false);
       }
@@ -340,7 +476,7 @@ export default function Marketplace() {
               >
                 
                 {/* Image Container with zoom-on-hover */}
-                <div className="relative h-64 bg-zinc-100 overflow-hidden">
+                <Link href={`/player/${player.id}`} className="block relative h-64 bg-zinc-100 overflow-hidden">
                   <img
                     src={player.imageURI}
                     alt={player.name}
@@ -349,16 +485,18 @@ export default function Marketplace() {
                   <div className="absolute top-4 left-4 bg-[#dd1515] text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1">
                     {player.position}
                   </div>
-                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4">
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4 z-10">
                     <span className="text-xs text-zinc-300 block font-mono">PLAYER ID: #{player.id}</span>
                     <span className="text-[10px] text-zinc-400 block font-mono truncate">OWNER: {player.owner}</span>
                   </div>
-                </div>
+                </Link>
 
                 {/* Content (Specer Card layout) */}
                 <div className="p-5 space-y-4">
                   <div>
-                    <h3 className="text-lg font-black text-zinc-950 uppercase tracking-tight truncate">{player.name}</h3>
+                    <Link href={`/player/${player.id}`} className="hover:text-[#dd1515] transition-colors">
+                      <h3 className="text-lg font-black text-zinc-950 uppercase tracking-tight truncate">{player.name}</h3>
+                    </Link>
                     <div className="flex justify-between items-center mt-2 text-xs text-zinc-500">
                       <span>Age: <strong className="text-zinc-700 font-bold">{player.age} Years</strong></span>
                       <span>Nationality: <strong className="text-zinc-700 font-bold">{player.nationality}</strong></span>

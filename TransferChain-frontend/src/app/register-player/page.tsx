@@ -53,9 +53,10 @@ export default function RegisterPlayer() {
   const [position, setPosition] = useState("Forward");
   const [age, setAge] = useState(21);
   const [nationality, setNationality] = useState("");
-  const [imageURI, setImageURI] = useState("/img/soccer/soccer-1.jpg");
+  const [imageURI, setImageURI] = useState("");
   const [customMetadataURI, setCustomMetadataURI] = useState("");
   const [isCustomURI, setIsCustomURI] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Auto-filled default values
   useEffect(() => {
@@ -83,15 +84,13 @@ export default function RegisterPlayer() {
     }, 0)
   ).toString(36)}`;
 
-  const finalMetadataURI = isCustomURI ? customMetadataURI : generatedCID;
+  useEffect(() => {
+    setImageURI(generatedCID);
+  }, []);
 
-  // Preset Player Images (Specer layout)
-  const imagePresets = [
-    { label: "Preset Forward", value: "/img/soccer/soccer-1.jpg" },
-    { label: "Preset Playmaker", value: "/img/soccer/soccer-2.jpg" },
-    { label: "Preset Striker", value: "/img/soccer/soccer-3.jpg" },
-    { label: "Preset Winger", value: "/img/soccer/soccer-4.jpg" },
-  ];
+  
+
+  
 
   // Submission States
   const [loading, setLoading] = useState(false);
@@ -107,6 +106,43 @@ export default function RegisterPlayer() {
     setTimeout(() => {
       setNotification(null);
     }, 5000);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingImage(true);
+      
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload-ipfs", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Upload failed");
+      }
+
+      const data = await res.json();
+      if (data.ipfsHash) {
+        // Construct the IPFS URL using a public gateway
+        const ipfsURL = `https://amethyst-patient-pheasant-516.mypinata.cloud/ipfs/${data.ipfsHash}`;
+        setImageURI(ipfsURL);
+        triggerNotification("Player portrait uploaded to IPFS successfully!");
+      } else {
+        alert("Upload failed: No IPFS hash received from API.");
+      }
+    } catch (err: any) {
+      console.error("IPFS Upload error:", err);
+      alert(`Failed to upload player portrait to IPFS: ${err.message || err}`);
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   // State synchronization helper (adds a log directly to local storage)
@@ -135,70 +171,111 @@ export default function RegisterPlayer() {
   };
 
   // Submit function mapping to playerRegistry.registerPlayer ABI
-  const Submit = () => {
+  const Submit = async () => {
     const targetOwner = ownerAddress || walletAddress;
     
     // Capture state values to prevent closure stale state bugs
     const currentPlayerName = name;
     const currentPlayerOwner = targetOwner;
-    const currentPlayerMetadata = finalMetadataURI;
     const currentPlayerPosition = position;
     const currentPlayerAge = Number(age);
     const currentPlayerNationality = nationality;
     const currentPlayerImage = imageURI;
 
     setLoading(true);
-    setLoadingStep("Awaiting signature confirmation from MetaMask...");
+    setLoadingStep("Uploading metadata document to IPFS...");
 
-    writeContract({
-      abi: playerRegistry,
-      address: Address as `0x${string}`,
-      functionName: 'registerPlayer',
-      args: [targetOwner, finalMetadataURI, name]
-    }, {
-      onSuccess: (txHash) => {
-        setLoading(false);
-        setSuccess(true);
-        
-        // Write to LocalStorage
-        if (typeof window !== "undefined") {
-          const storedPlayers = localStorage.getItem("tc_players");
-          const currentPlayers: Player[] = storedPlayers ? JSON.parse(storedPlayers) : [];
+    try {
+      // 1. Construct the metadata JSON payload
+      const metadataPayload = {
+        name: currentPlayerName,
+        position: currentPlayerPosition,
+        age: currentPlayerAge,
+        nationality: currentPlayerNationality,
+        imageURI: currentPlayerImage,
+        status: "Active",
+        schema: "ipfs://bafkreidtransferchainplayer.json"
+      };
 
-          const newPlayer: Player = {
-            id: currentPlayers.length + 1,
-            owner: currentPlayerOwner,
-            name: currentPlayerName,
-            metadataURI: currentPlayerMetadata,
-            position: currentPlayerPosition,
-            age: currentPlayerAge,
-            nationality: currentPlayerNationality,
-            imageURI: currentPlayerImage,
-            status: "Active",
-            registeredAt: new Date().toISOString().replace("T", " ").substring(0, 16),
-            currentClub: "Free Agent",
-          };
+      // 2. Upload metadata JSON to IPFS via API route
+      const uploadRes = await fetch("/api/upload-ipfs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(metadataPayload)
+      });
 
-          localStorage.setItem("tc_players", JSON.stringify([...currentPlayers, newPlayer]));
-
-          // Log transaction
-          const log = addLocalLog(
-            "PlayerRegistered",
-            "PlayerRegistry.sol",
-            `Player Registered: ${currentPlayerName} (ID: ${newPlayer.id}) on Injective EVM. Tx: ${txHash}`
-          );
-
-          if (log) {
-            setTxDetails({ hash: txHash, block: log.block });
-          }
-        }
-        triggerNotification(`Player "${currentPlayerName}" registered successfully on PlayerRegistry!`);
-      },
-      onError: (err) => {
-        setLoading(false);
-        alert(`Transaction failed: ${err.message || err}`);
+      if (!uploadRes.ok) {
+        const errorData = await uploadRes.json();
+        throw new Error(errorData.error || "Metadata IPFS upload failed");
       }
-    });
+
+      const uploadData = await uploadRes.json();
+      const ipfsCID = uploadData.ipfsHash;
+      if (!ipfsCID) {
+        throw new Error("No IPFS hash returned for metadata document.");
+      }
+
+      const realMetadataURI = `ipfs://${ipfsCID}`;
+      setLoadingStep("Awaiting signature confirmation from MetaMask...");
+
+      // 3. Trigger smart contract write with the actual IPFS metadata URI
+      writeContract({
+        abi: playerRegistry,
+        address: Address as `0x${string}`,
+        functionName: 'registerPlayer',
+        args: [targetOwner, realMetadataURI, currentPlayerName]
+      }, {
+        onSuccess: (txHash) => {
+          setLoading(false);
+          setSuccess(true);
+          
+          // Write to LocalStorage
+          if (typeof window !== "undefined") {
+            const storedPlayers = localStorage.getItem("tc_players");
+            const currentPlayers: Player[] = storedPlayers ? JSON.parse(storedPlayers) : [];
+
+            const newPlayer: Player = {
+              id: currentPlayers.length + 1,
+              owner: currentPlayerOwner,
+              name: currentPlayerName,
+              metadataURI: realMetadataURI,
+              position: currentPlayerPosition,
+              age: currentPlayerAge,
+              nationality: currentPlayerNationality,
+              imageURI: currentPlayerImage,
+              status: "Active",
+              registeredAt: new Date().toISOString().replace("T", " ").substring(0, 16),
+              currentClub: "Free Agent",
+            };
+
+            localStorage.setItem("tc_players", JSON.stringify([...currentPlayers, newPlayer]));
+
+            // Log transaction
+            const log = addLocalLog(
+              "PlayerRegistered",
+              "PlayerRegistry.sol",
+              `Player Registered: ${currentPlayerName} (ID: ${newPlayer.id}) on Injective EVM. Tx: ${txHash}`
+            );
+
+            if (log) {
+              setTxDetails({ hash: txHash, block: log.block });
+            }
+          }
+          triggerNotification(`Player "${currentPlayerName}" registered successfully on PlayerRegistry!`);
+        },
+        onError: (err) => {
+          setLoading(false);
+          alert(`Transaction failed: ${err.message || err}`);
+        }
+      });
+
+    } catch (ipfsErr: any) {
+      setLoading(false);
+      console.error("IPFS Metadata Upload error:", ipfsErr);
+      alert(`Failed to pin player metadata to IPFS: ${ipfsErr.message || ipfsErr}`);
+    }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -233,62 +310,7 @@ export default function RegisterPlayer() {
     }
   };
 
-  const handleSimulateBypass = async (e: React.MouseEvent) => {
-    e.preventDefault();
 
-    if (!name) {
-      alert("Player Name is required.");
-      return;
-    }
-
-    if (!nationality) {
-      alert("Player Nationality is required.");
-      return;
-    }
-
-    const targetOwner = ownerAddress || walletAddress || "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
-
-    setLoading(true);
-    setLoadingStep("Simulating on-chain transaction logs... (Offline Bypass Mode)");
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    // Write to LocalStorage
-    if (typeof window !== "undefined") {
-      const storedPlayers = localStorage.getItem("tc_players");
-      const currentPlayers: Player[] = storedPlayers ? JSON.parse(storedPlayers) : [];
-
-      const newPlayer: Player = {
-        id: currentPlayers.length + 1,
-        owner: targetOwner,
-        name,
-        metadataURI: finalMetadataURI,
-        position,
-        age: Number(age),
-        nationality,
-        imageURI,
-        status: "Active",
-        registeredAt: new Date().toISOString().replace("T", " ").substring(0, 16),
-        currentClub: "Free Agent",
-      };
-
-      localStorage.setItem("tc_players", JSON.stringify([...currentPlayers, newPlayer]));
-
-      // Log transaction
-      const log = addLocalLog(
-        "PlayerRegistered",
-        "PlayerRegistry.sol",
-        `[SIMULATED] Player Registered: ${name} (ID: ${newPlayer.id}) on Injective EVM`
-      );
-
-      if (log) {
-        setTxDetails({ hash: log.hash, block: log.block });
-      }
-    }
-
-    setLoading(false);
-    setSuccess(true);
-    triggerNotification(`[Simulated] Player "${name}" registered successfully!`);
-  };
 
   const resetForm = () => {
     setName("");
@@ -387,17 +409,12 @@ export default function RegisterPlayer() {
 
                 <div className="flex justify-center gap-4">
                   <button
-                    onClick={() => router.push("/#players")}
+                    onClick={() => router.push("/marketplace")}
                     className="bg-[#dd1515] hover:bg-zinc-950 text-white font-extrabold text-xs uppercase px-6 py-3.5 tracking-wider transition-colors"
                   >
                     View in Player Feed
                   </button>
-                  <button
-                    onClick={resetForm}
-                    className="bg-transparent hover:bg-zinc-100 text-zinc-700 font-extrabold text-xs uppercase px-6 py-3.5 border border-zinc-300 transition-colors"
-                  >
-                    Register Another
-                  </button>
+                  
                 </div>
               </div>
             ) : loading ? (
@@ -493,70 +510,47 @@ export default function RegisterPlayer() {
                     />
                   </div>
 
-                  {/* Profile Preset Image */}
+                  {/* Profile Image Input Selector */}
+                  <div className="grid gap-6">
+                    {/* File Input upload */}
+                    <div className="space-y-2">
+                      <label className="text-[11px] text-zinc-500 uppercase font-black tracking-wider flex items-center gap-1">
+                        Upload Portrait to IPFS
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={uploadingImage}
+                        className="w-full px-3 py-2 bg-[#fcfcfd] border border-zinc-300 rounded text-xs text-zinc-900 focus:border-[#dd1515] focus:outline-none file:mr-3 file:py-1 file:px-3 file:rounded-sm file:border-0 file:text-[10px] file:font-extrabold file:bg-zinc-900 file:text-white hover:file:bg-[#dd1515] file:cursor-pointer file:transition-colors"
+                      />
+                      {uploadingImage && (
+                        <p className="text-[9px] text-[#dd1515] font-mono animate-pulse">Uploading file to IPFS node...</p>
+                      )}
+                    </div>
+              </div>
+                    
                   <div className="space-y-2">
-                    <label className="text-[11px] text-zinc-500 uppercase font-black tracking-wider">Profile Preset Image</label>
-                    <select
-                      value={imageURI}
-                      onChange={(e) => setImageURI(e.target.value)}
-                      className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm text-zinc-900 focus:border-[#dd1515] focus:outline-none"
-                    >
-                      {imagePresets.map((pr) => (
-                        <option key={pr.value} value={pr.value}>
-                          {pr.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                      <div className="flex items-center justify-between">
                     <label className="text-[11px] text-zinc-500 uppercase font-black tracking-wider">
                       Img Url
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => setIsCustomURI(!isCustomURI)}
-                      className="text-[10px] text-[#dd1515] uppercase font-bold hover:underline"
-                    >
-                      {isCustomURI ? "Use Generated Hash" : "Set Custom Hash"}
-                    </button>
-                  </div>
 
-                  {isCustomURI ? (
-                    <input
-                      type="text"
-                      placeholder="ipfs://bafybei..."
-                      value={customMetadataURI}
-                      onChange={(e) => setCustomMetadataURI(e.target.value)}
-                      className="w-full px-4 py-3 bg-[#fcfcfd] border border-zinc-300 rounded text-sm font-mono text-zinc-900 focus:border-[#dd1515] focus:outline-none"
-                    />
-                  ) : (
                     <div className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded text-xs font-mono text-zinc-500 overflow-x-auto whitespace-nowrap">
-                      {generatedCID}
+                      {imageURI}
                     </div>
-                  )}
                   </div>
                 </div>
-                    
-               
-                {/* Submit buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                {/* Submit button */}
+                <center>
                   <button
                     type="submit"
                     disabled={!walletConnected}
                     onClick={handleRegister}
-                    className="w-full sm:w-auto rounded bg-[#dd1515] hover:bg-[#111111] text-white disabled:bg-zinc-300 disabled:cursor-not-allowed font-extrabold text-xs tracking-wider uppercase px-6 py-3.5 transition-all duration-300 shadow-md shadow-[#dd1515]/20 hover:shadow-black/10"
+                    className="rounded bg-[#dd1515] hover:bg-[#111111] text-white disabled:bg-zinc-350 disabled:cursor-not-allowed font-extrabold text-sm tracking-wider uppercase px-8 py-3.5 transition-all duration-300 shadow-md shadow-[#dd1515]/20 hover:shadow-black/10"
                   >
-                     On-Chain Register
+                     Register Player
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleSimulateBypass}
-                    className="w-full sm:w-auto rounded bg-zinc-900 hover:bg-[#dd1515] text-white font-extrabold text-xs tracking-wider uppercase px-6 py-3.5 transition-all duration-300 shadow-md hover:shadow-black/10 animate-pulse hover:animate-none"
-                  >
-                     Simulate Locally (Bypass)
-                  </button>
-                </div>
+                </center>
               </form>
             )}
           </div>

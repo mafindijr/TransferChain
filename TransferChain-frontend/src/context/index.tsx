@@ -17,7 +17,7 @@ if (!projectId) {
 const metadata = {
   name: 'TransferChain',
   description: 'Next-gen decentralized transfer registry, agreements, and escrow settlement protocol.',
-  url: 'https://appkitexampleapp.com', // origin must match your domain & subdomain
+  url: 'http://localhost:3000', // origin must match your domain & subdomain
   icons: ['https://avatars.githubusercontent.com/u/179229932']
 }
 

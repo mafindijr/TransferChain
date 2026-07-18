@@ -28,8 +28,8 @@ export default async function RootLayout({
   const cookies = headersList.get("cookie");
 
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="font-sans antialiased">
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <ContextProvider cookies={cookies}>{children}</ContextProvider>
       </body>
     </html>

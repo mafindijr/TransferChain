@@ -1007,7 +1007,7 @@ export default function Home() {
               <div key={player.id} className="bg-white border border-zinc-200 overflow-hidden group shadow-md hover:shadow-2xl hover:border-[#dd1515]/30 hover:-translate-y-2.5 transition-all duration-500 ease-out rounded-sm">
                 
                 {/* Image Container with zoom-on-hover */}
-                <div className="relative h-64 bg-zinc-100 overflow-hidden">
+                <Link href={`/player/${player.id}`} className="block relative h-64 bg-zinc-100 overflow-hidden">
                   <img
                     src={player.imageURI}
                     alt={player.name}
@@ -1016,16 +1016,18 @@ export default function Home() {
                   <div className="absolute top-4 left-4 bg-[#dd1515] text-white text-[9px] font-extrabold uppercase tracking-widest px-3 py-1">
                     {player.position}
                   </div>
-                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4">
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4 z-10">
                     <span className="text-xs text-zinc-300 block font-mono">PLAYER ID: #{player.id}</span>
                     <span className="text-xs text-zinc-200 block font-medium">{player.nationality}</span>
                   </div>
-                </div>
+                </Link>
 
                 {/* Content (Specer Card layout) */}
                 <div className="p-5 space-y-4">
                   <div>
-                    <h3 className="text-lg font-black text-zinc-950 uppercase tracking-tight">{player.name}</h3>
+                    <Link href={`/player/${player.id}`} className="hover:text-[#dd1515] transition-colors">
+                      <h3 className="text-lg font-black text-zinc-950 uppercase tracking-tight">{player.name}</h3>
+                    </Link>
                     <p className="text-xs text-zinc-500 mt-1">
                       Current Club: <strong className="text-zinc-800 font-bold">{player.currentClub}</strong>
                     </p>
