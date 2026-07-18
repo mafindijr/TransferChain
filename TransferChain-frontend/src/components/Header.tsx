@@ -2,6 +2,7 @@
 
 import React from "react";
 import ConnectButton from "./connectButton";
+import Link from "next/link";
 
 export default function Header() {
   return (
@@ -22,9 +23,9 @@ export default function Header() {
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <a href="#contracts" className="hover:text-white transition-colors">Smart Contracts</a>
+            <Link href="/#contracts" className="hover:text-white transition-colors">Smart Contracts</Link>
             <span className="text-zinc-700">|</span>
-            <a href="#console" className="hover:text-white transition-colors">dApp Console</a>
+            <Link href="/#console" className="hover:text-white transition-colors">dApp Console</Link>
           </div>
         </div>
       </div>
@@ -50,11 +51,13 @@ export default function Header() {
 
           {/* Navigation Links */}
           <nav className="hidden lg:flex items-center gap-8 font-extrabold text-xs uppercase tracking-wider text-zinc-900">
-            <a href="#hero" className="border-b-2 border-[#dd1515] text-[#dd1515] pb-1 hover:text-[#dd1515] transition-all">HOME</a>
-            <a href="#live-agreements" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">AGREEMENTS</a>
-            <a href="#players" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">PLAYER FEED</a>
-            <a href="#activity" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">LEDGER</a>
-            <a href="#console" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">CONSOLE</a>
+            <Link href="/#hero" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">HOME</Link>
+            <Link href="/#live-agreements" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">AGREEMENTS</Link>
+            <Link href="/marketplace" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">MARKETPLACE</Link>
+            <Link href="/#players" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">PLAYER FEED</Link>
+            <Link href="/#activity" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">LEDGER</Link>
+            <Link href="/#console" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">CONSOLE</Link>
+            <Link href="/register-player" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">REGISTER PLAYER</Link>
           </nav>
 
           {/* Wallet Actions */}

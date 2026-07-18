@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -29,10 +30,10 @@ export default function Footer() {
               Smart Contracts
             </h4>
             <ul className="space-y-2 text-xs font-mono">
-              <li><a href="#contracts" className="hover:text-white transition-colors">ClubRegistry.sol</a></li>
-              <li><a href="#contracts" className="hover:text-white transition-colors">PlayerRegistry.sol</a></li>
-              <li><a href="#contracts" className="hover:text-white transition-colors">TransferMarketplace.sol</a></li>
-              <li><a href="#contracts" className="hover:text-white transition-colors">Escrow.sol</a></li>
+              <li><Link href="/#contracts" className="hover:text-white transition-colors">ClubRegistry.sol</Link></li>
+              <li><Link href="/#contracts" className="hover:text-white transition-colors">PlayerRegistry.sol</Link></li>
+              <li><Link href="/#contracts" className="hover:text-white transition-colors">TransferMarketplace.sol</Link></li>
+              <li><Link href="/#contracts" className="hover:text-white transition-colors">Escrow.sol</Link></li>
             </ul>
           </div>
 
@@ -42,10 +43,10 @@ export default function Footer() {
               Documentation
             </h4>
             <ul className="space-y-2 text-xs">
-              <li><a href="#" className="hover:text-white transition-colors">Protocol Architecture</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Zero-Knowledge Specs</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Audit Reports</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Developer SDK Docs</a></li>
+              <li><Link href="/#" className="hover:text-white transition-colors">Protocol Architecture</Link></li>
+              <li><Link href="/#" className="hover:text-white transition-colors">Zero-Knowledge Specs</Link></li>
+              <li><Link href="/#" className="hover:text-white transition-colors">Audit Reports</Link></li>
+              <li><Link href="/#" className="hover:text-white transition-colors">Developer SDK Docs</Link></li>
             </ul>
           </div>
 
@@ -73,9 +74,9 @@ export default function Footer() {
         <div className="mt-12 pt-8 border-t border-zinc-800/80 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-zinc-500">
           <p>© {new Date().getFullYear()} TransferChain Protocol. All Rights Reserved. Designed with Specer Sports Theme.</p>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-white transition-colors">Security Disclosures</a>
+            <Link href="/#" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link href="/#" className="hover:text-white transition-colors">Terms of Service</Link>
+            <Link href="/#" className="hover:text-white transition-colors">Security Disclosures</Link>
           </div>
         </div>
       </div>

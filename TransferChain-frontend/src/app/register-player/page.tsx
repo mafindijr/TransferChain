@@ -136,12 +136,68 @@ export default function RegisterPlayer() {
 
   // Submit function mapping to playerRegistry.registerPlayer ABI
   const Submit = () => {
-    const targetOwner = ownerAddress;
+    const targetOwner = ownerAddress || walletAddress;
+    
+    // Capture state values to prevent closure stale state bugs
+    const currentPlayerName = name;
+    const currentPlayerOwner = targetOwner;
+    const currentPlayerMetadata = finalMetadataURI;
+    const currentPlayerPosition = position;
+    const currentPlayerAge = Number(age);
+    const currentPlayerNationality = nationality;
+    const currentPlayerImage = imageURI;
+
+    setLoading(true);
+    setLoadingStep("Awaiting signature confirmation from MetaMask...");
+
     writeContract({
       abi: playerRegistry,
       address: Address as `0x${string}`,
       functionName: 'registerPlayer',
       args: [targetOwner, finalMetadataURI, name]
+    }, {
+      onSuccess: (txHash) => {
+        setLoading(false);
+        setSuccess(true);
+        
+        // Write to LocalStorage
+        if (typeof window !== "undefined") {
+          const storedPlayers = localStorage.getItem("tc_players");
+          const currentPlayers: Player[] = storedPlayers ? JSON.parse(storedPlayers) : [];
+
+          const newPlayer: Player = {
+            id: currentPlayers.length + 1,
+            owner: currentPlayerOwner,
+            name: currentPlayerName,
+            metadataURI: currentPlayerMetadata,
+            position: currentPlayerPosition,
+            age: currentPlayerAge,
+            nationality: currentPlayerNationality,
+            imageURI: currentPlayerImage,
+            status: "Active",
+            registeredAt: new Date().toISOString().replace("T", " ").substring(0, 16),
+            currentClub: "Free Agent",
+          };
+
+          localStorage.setItem("tc_players", JSON.stringify([...currentPlayers, newPlayer]));
+
+          // Log transaction
+          const log = addLocalLog(
+            "PlayerRegistered",
+            "PlayerRegistry.sol",
+            `Player Registered: ${currentPlayerName} (ID: ${newPlayer.id}) on Injective EVM. Tx: ${txHash}`
+          );
+
+          if (log) {
+            setTxDetails({ hash: txHash, block: log.block });
+          }
+        }
+        triggerNotification(`Player "${currentPlayerName}" registered successfully on PlayerRegistry!`);
+      },
+      onError: (err) => {
+        setLoading(false);
+        alert(`Transaction failed: ${err.message || err}`);
+      }
     });
   };
 
@@ -177,56 +233,62 @@ export default function RegisterPlayer() {
     }
   };
 
-  // Synchronize loading and transaction states reactively
-  useEffect(() => {
-    if (isContractPending) {
-      setLoading(true);
-      setLoadingStep("Awaiting signature confirmation from MetaMask...");
-    } else if (hash) {
-      setLoading(false);
-      setSuccess(true);
-      
-      // Write to LocalStorage (preventing duplicate entries)
-      if (typeof window !== "undefined") {
-        const storedPlayers = localStorage.getItem("tc_players");
-        const currentPlayers: Player[] = storedPlayers ? JSON.parse(storedPlayers) : [];
+  const handleSimulateBypass = async (e: React.MouseEvent) => {
+    e.preventDefault();
 
-        const playerExists = currentPlayers.some(p => p.metadataURI === finalMetadataURI);
-        if (!playerExists) {
-          const newPlayer: Player = {
-            id: currentPlayers.length + 1,
-            owner: ownerAddress || walletAddress,
-            name,
-            metadataURI: finalMetadataURI,
-            position,
-            age: Number(age),
-            nationality,
-            imageURI,
-            status: "Active",
-            registeredAt: new Date().toISOString().replace("T", " ").substring(0, 16),
-            currentClub: "Free Agent",
-          };
-
-          localStorage.setItem("tc_players", JSON.stringify([...currentPlayers, newPlayer]));
-
-          // Log transaction
-          const log = addLocalLog(
-            "PlayerRegistered",
-            "PlayerRegistry.sol",
-            `Player Registered: ${name} (ID: ${newPlayer.id}) on Injective EVM. Tx: ${hash}`
-          );
-
-          if (log) {
-            setTxDetails({ hash, block: log.block });
-          }
-        }
-      }
-      triggerNotification(`Player "${name}" registered successfully on PlayerRegistry!`);
-    } else if (contractError) {
-      setLoading(false);
-      alert(`Transaction failed: ${contractError.message || contractError}`);
+    if (!name) {
+      alert("Player Name is required.");
+      return;
     }
-  }, [isContractPending, contractError, hash]);
+
+    if (!nationality) {
+      alert("Player Nationality is required.");
+      return;
+    }
+
+    const targetOwner = ownerAddress || walletAddress || "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
+
+    setLoading(true);
+    setLoadingStep("Simulating on-chain transaction logs... (Offline Bypass Mode)");
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
+    // Write to LocalStorage
+    if (typeof window !== "undefined") {
+      const storedPlayers = localStorage.getItem("tc_players");
+      const currentPlayers: Player[] = storedPlayers ? JSON.parse(storedPlayers) : [];
+
+      const newPlayer: Player = {
+        id: currentPlayers.length + 1,
+        owner: targetOwner,
+        name,
+        metadataURI: finalMetadataURI,
+        position,
+        age: Number(age),
+        nationality,
+        imageURI,
+        status: "Active",
+        registeredAt: new Date().toISOString().replace("T", " ").substring(0, 16),
+        currentClub: "Free Agent",
+      };
+
+      localStorage.setItem("tc_players", JSON.stringify([...currentPlayers, newPlayer]));
+
+      // Log transaction
+      const log = addLocalLog(
+        "PlayerRegistered",
+        "PlayerRegistry.sol",
+        `[SIMULATED] Player Registered: ${name} (ID: ${newPlayer.id}) on Injective EVM`
+      );
+
+      if (log) {
+        setTxDetails({ hash: log.hash, block: log.block });
+      }
+    }
+
+    setLoading(false);
+    setSuccess(true);
+    triggerNotification(`[Simulated] Player "${name}" registered successfully!`);
+  };
 
   const resetForm = () => {
     setName("");
@@ -477,18 +539,24 @@ export default function RegisterPlayer() {
                 </div>
                     
                
-                {/* Submit button */}
-                <center>
-
-                <button
-                  type="submit"
-                  disabled={!walletConnected}
-                  onClick={handleRegister}
-                  className="rounded bg-[#dd1515] hover:bg-[#111111] text-white disabled:bg-zinc-350 disabled:cursor-not-allowed font-extrabold text-sm tracking-wider uppercase p-3 transition-all duration-300 shadow-md shadow-[#dd1515]/20 hover:shadow-black/10"
+                {/* Submit buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                  <button
+                    type="submit"
+                    disabled={!walletConnected}
+                    onClick={handleRegister}
+                    className="w-full sm:w-auto rounded bg-[#dd1515] hover:bg-[#111111] text-white disabled:bg-zinc-300 disabled:cursor-not-allowed font-extrabold text-xs tracking-wider uppercase px-6 py-3.5 transition-all duration-300 shadow-md shadow-[#dd1515]/20 hover:shadow-black/10"
                   >
-                   Register Player
-                </button>
-                  </center>
+                     On-Chain Register
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSimulateBypass}
+                    className="w-full sm:w-auto rounded bg-zinc-900 hover:bg-[#dd1515] text-white font-extrabold text-xs tracking-wider uppercase px-6 py-3.5 transition-all duration-300 shadow-md hover:shadow-black/10 animate-pulse hover:animate-none"
+                  >
+                     Simulate Locally (Bypass)
+                  </button>
+                </div>
               </form>
             )}
           </div>

@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import React, { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
+import Link from "next/link";
 
 // Types corresponding to TransferChain Smart Contracts
 interface Club {
@@ -992,12 +993,12 @@ export default function Home() {
               <span className="text-xs font-extrabold text-[#dd1515] tracking-widest uppercase">Verified Profiles</span>
               <h2 className="text-3xl font-black text-zinc-950 uppercase tracking-tight">Marketplace</h2>
             </div>
-            <a
-              href="/register/player"
+            <Link
+              href="/register-player"
               className="hidden sm:inline-block bg-zinc-900 hover:bg-[#dd1515] text-white font-extrabold text-xs uppercase tracking-wider px-4 py-3.5 transition-colors"
             >
               + Register New Player
-            </a>  
+            </Link>  
           </div>
 
           {/* Grid of Players */}
