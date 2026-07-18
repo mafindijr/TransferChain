@@ -22,8 +22,8 @@ The `TransferChain` class accepts a configuration object at construction time.
 import { TransferChain } from "@transferchain/sdk";
 
 const tc = new TransferChain({
-  chainId: 8888,
-  rpcUrl: "https://evm.injective.network",
+  chainId: 1439,
+  rpcUrl: "https://k8s.testnet.json-rpc.injective.network",
   privateKey: "0x...",
 });
 ```
@@ -32,8 +32,8 @@ The SDK operates in read-only mode if no signer is provided:
 
 ```typescript
 const tc = new TransferChain({
-  chainId: 8888,
-  rpcUrl: "https://evm.injective.network",
+  chainId: 1439,
+  rpcUrl: "https://k8s.testnet.json-rpc.injective.network",
   // No privateKey or signer — read-only mode
 });
 ```
@@ -126,7 +126,8 @@ The SDK ships with a built-in manifest for known deployments:
 
 | Chain | Chain ID | Status |
 |-------|----------|--------|
-| Injective EVM Testnet | 8888 | Supported |
+| Injective Testnet | 1439 | Supported |
+| Injective EVM Testnet (Legacy) | 8888 | Legacy |
 | Injective EVM Mainnet | 525 | Planned |
 
 ### Custom Manifest

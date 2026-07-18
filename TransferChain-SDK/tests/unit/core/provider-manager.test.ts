@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ethers } from "ethers";
 import { ProviderManager } from "../../../src/core/provider-manager.js";
-import { ProviderError } from "../../../src/errors/provider-error.js";
+import { ChainMismatchError } from "../../../src/errors/chain-mismatch-error.js";
 import { silentLogger } from "../../../src/logger/silent-logger.js";
 import type { SdkConfig } from "../../../src/types/config.js";
 
 function makeConfig(overrides: Partial<SdkConfig> = {}): SdkConfig {
   return {
-    chainId: 8888,
-    rpcUrl: "https://evm.testnet.injective.network",
+    chainId: 1439,
+    rpcUrl: "https://k8s.testnet.json-rpc.injective.network",
     ...overrides,
   };
 }
@@ -53,7 +53,7 @@ describe("ProviderManager", () => {
     // Since rpcUrl is validated at config level, let's test with a config
     // that has no provider and no rpcUrl
     const mgr = new ProviderManager(
-      { chainId: 8888, rpcUrl: "http://placeholder" },
+      { chainId: 1439, rpcUrl: "http://placeholder" },
       silentLogger,
     );
     // This should work because rpcUrl is provided
@@ -88,13 +88,13 @@ describe("ProviderManager chain validation", () => {
       .spyOn(manager, "getProvider")
       .mockReturnValue(mockProvider);
 
-    await expect(manager.validateChainId()).rejects.toThrow(ProviderError);
+    await expect(manager.validateChainId()).rejects.toThrow(ChainMismatchError);
     getProviderSpy.mockRestore();
   });
 
   it("should pass when chain IDs match", async () => {
     const mockProvider = {
-      getNetwork: vi.fn().mockResolvedValue({ chainId: 8888n }),
+      getNetwork: vi.fn().mockResolvedValue({ chainId: 1439n }),
     } as unknown as ethers.Provider;
 
     const manager = new ProviderManager(makeConfig(), silentLogger);

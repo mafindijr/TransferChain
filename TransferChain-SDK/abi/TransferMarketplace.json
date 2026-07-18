@@ -13,11 +13,6 @@
           "name": "listingId_",
           "type": "uint256",
           "internalType": "uint256"
-        },
-        {
-          "name": "caller_",
-          "type": "address",
-          "internalType": "address"
         }
       ],
       "outputs": [],
@@ -48,7 +43,7 @@
           "internalType": "uint256"
         },
         {
-          "name": "metadataURI_",
+          "name": "metadataUri_",
           "type": "string",
           "internalType": "string"
         }
@@ -215,11 +210,6 @@
         },
         {
           "name": "buyer_",
-          "type": "address",
-          "internalType": "address"
-        },
-        {
-          "name": "caller_",
           "type": "address",
           "internalType": "address"
         }

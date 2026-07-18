@@ -21,7 +21,6 @@ contract TransferChainConfig is Ownable {
     event EmergencyModeUpdated(bool indexed enabled);
     event ProtocolPaused(bool indexed paused);
 
-    error NotAuthorized();
     error InvalidFee();
     error InvalidAddress();
     error TokenAlreadySupported();

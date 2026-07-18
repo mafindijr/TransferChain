@@ -3,13 +3,13 @@ import { BUILTIN_MANIFEST } from "../../../src/constants/manifest.js";
 import { CHAIN_REGISTRY } from "../../../src/constants/chains.js";
 
 describe("BUILTIN_MANIFEST", () => {
-  it("should contain Injective EVM Testnet (8888)", () => {
-    const deployment = BUILTIN_MANIFEST[8888];
+  it("should contain Injective Testnet (1439)", () => {
+    const deployment = BUILTIN_MANIFEST[1439];
     expect(deployment).toBeDefined();
   });
 
-  it("should have all 8 contract addresses for chain 8888", () => {
-    const deployment = BUILTIN_MANIFEST[8888];
+  it("should have all 8 contract addresses for chain 1439", () => {
+    const deployment = BUILTIN_MANIFEST[1439];
     expect(deployment).toBeDefined();
 
     const requiredKeys = [
@@ -31,11 +31,11 @@ describe("BUILTIN_MANIFEST", () => {
 });
 
 describe("CHAIN_REGISTRY", () => {
-  it("should contain Injective EVM Testnet (8888)", () => {
-    const chain = CHAIN_REGISTRY[8888];
+  it("should contain Injective Testnet (1439)", () => {
+    const chain = CHAIN_REGISTRY[1439];
     expect(chain).toBeDefined();
-    expect(chain.name).toBe("Injective EVM Testnet");
-    expect(chain.chainId).toBe(8888);
+    expect(chain.name).toBe("Injective Testnet");
+    expect(chain.chainId).toBe(1439);
   });
 
   it("should contain Injective EVM Mainnet (525)", () => {
@@ -45,8 +45,8 @@ describe("CHAIN_REGISTRY", () => {
     expect(chain.chainId).toBe(525);
   });
 
-  it("should have correct native currency for chain 8888", () => {
-    const chain = CHAIN_REGISTRY[8888];
+  it("should have correct native currency for chain 1439", () => {
+    const chain = CHAIN_REGISTRY[1439];
     expect(chain.nativeCurrency).toEqual({
       name: "INJ",
       symbol: "INJ",

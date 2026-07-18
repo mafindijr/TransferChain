@@ -37,11 +37,12 @@ TransferChainError (base)
 │   ├── TOKEN_ALREADY_SUPPORTED
 │   ├── TOKEN_NOT_SUPPORTED
 │   └── INSUFFICIENT_BALANCE
+├── ChainMismatchError
+│   └── CHAIN_MISMATCH
 ├── ProviderError
 │   ├── CONNECTION_FAILED
 │   ├── CHAIN_MISMATCH
-│   ├── REQUEST_TIMEOUT
-│   └── CHAIN_NOT_SUPPORTED
+│   └── REQUEST_TIMEOUT
 └── TransactionError
     ├── GAS_ESTIMATION_FAILED
     ├── SUBMISSION_FAILED
@@ -92,6 +93,10 @@ class ContractError extends TransferChainError {
     contractErrorArgs?: Record<string, unknown>,
     cause?: Error
   );
+}
+
+class ChainMismatchError extends TransferChainError {
+  constructor(expectedChainId: number, actualChainId: number);
 }
 
 class ProviderError extends TransferChainError {
@@ -175,12 +180,19 @@ import {
   ContractError,
   ValidationError,
   TransactionError,
+  ChainMismatchError,
 } from "@transferchain/sdk";
 
 try {
   const result = await tc.marketplace.createListing(params);
 } catch (error) {
-  if (error instanceof ValidationError) {
+  if (error instanceof ChainMismatchError) {
+    // Wrong network — wallet is on a different chain
+    console.error(
+      `Wrong network: expected ${error.context?.expectedChainId}, got ${error.context?.actualChainId}`,
+    );
+
+  } else if (error instanceof ValidationError) {
     // Input validation failed before any RPC call
     console.error(`Invalid input: ${error.code}`);
 

@@ -10,15 +10,15 @@ import type { SdkConfig } from "../../../src/types/config.js";
 
 function createRegistry(signer?: unknown): ContractRegistry {
   const config: SdkConfig = {
-    chainId: 8888,
-    rpcUrl: "https://evm.testnet.injective.network",
+    chainId: 1439,
+    rpcUrl: "https://k8s.testnet.json-rpc.injective.network",
     signer: signer as import("ethers").Signer | undefined,
   };
   const pm = new ProviderManager(config, silentLogger);
   const sm = new SignerManager(config, pm, silentLogger);
 
   return new ContractRegistry(
-    8888,
+    1439,
     BUILTIN_MANIFEST,
     pm,
     sm,
@@ -37,7 +37,7 @@ describe("ContractRegistry", () => {
     it("should resolve address from built-in manifest", () => {
       const registry = createRegistry();
       const address = registry.getAddress("playerRegistry");
-      expect(address).toBe(BUILTIN_MANIFEST[8888].playerRegistry);
+      expect(address).toBe(BUILTIN_MANIFEST[1439].playerRegistry);
     });
 
     it("should resolve all 8 contract addresses", () => {
