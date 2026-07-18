@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useRouter } from "next/navigation";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useWriteContract } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
 import playerRegistry from "@/abis/PlayerRegistry.json";
 
@@ -46,9 +46,6 @@ export default function RegisterPlayer() {
 
   // Contract Write hooks
   const { writeContract, data: hash, error: contractError, isPending: isContractPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash,
-  });
 
   // Form Inputs
   const [name, setName] = useState("");
@@ -185,43 +182,43 @@ export default function RegisterPlayer() {
     if (isContractPending) {
       setLoading(true);
       setLoadingStep("Awaiting signature confirmation from MetaMask...");
-    } else if (isConfirming) {
-      setLoading(true);
-      setLoadingStep("Broadcasting transaction & confirming block status on Injective EVM...");
-    } else if (isConfirmed && hash) {
+    } else if (hash) {
       setLoading(false);
       setSuccess(true);
       
-      // Write to LocalStorage
+      // Write to LocalStorage (preventing duplicate entries)
       if (typeof window !== "undefined") {
         const storedPlayers = localStorage.getItem("tc_players");
         const currentPlayers: Player[] = storedPlayers ? JSON.parse(storedPlayers) : [];
 
-        const newPlayer: Player = {
-          id: currentPlayers.length + 1,
-          owner: ownerAddress || walletAddress,
-          name,
-          metadataURI: finalMetadataURI,
-          position,
-          age: Number(age),
-          nationality,
-          imageURI,
-          status: "Active",
-          registeredAt: new Date().toISOString().replace("T", " ").substring(0, 16),
-          currentClub: "Free Agent",
-        };
+        const playerExists = currentPlayers.some(p => p.metadataURI === finalMetadataURI);
+        if (!playerExists) {
+          const newPlayer: Player = {
+            id: currentPlayers.length + 1,
+            owner: ownerAddress || walletAddress,
+            name,
+            metadataURI: finalMetadataURI,
+            position,
+            age: Number(age),
+            nationality,
+            imageURI,
+            status: "Active",
+            registeredAt: new Date().toISOString().replace("T", " ").substring(0, 16),
+            currentClub: "Free Agent",
+          };
 
-        localStorage.setItem("tc_players", JSON.stringify([...currentPlayers, newPlayer]));
+          localStorage.setItem("tc_players", JSON.stringify([...currentPlayers, newPlayer]));
 
-        // Log transaction
-        const log = addLocalLog(
-          "PlayerRegistered",
-          "PlayerRegistry.sol",
-          `Player Registered: ${name} (ID: ${newPlayer.id}) on Injective EVM. Tx: ${hash}`
-        );
+          // Log transaction
+          const log = addLocalLog(
+            "PlayerRegistered",
+            "PlayerRegistry.sol",
+            `Player Registered: ${name} (ID: ${newPlayer.id}) on Injective EVM. Tx: ${hash}`
+          );
 
-        if (log) {
-          setTxDetails({ hash, block: log.block });
+          if (log) {
+            setTxDetails({ hash, block: log.block });
+          }
         }
       }
       triggerNotification(`Player "${name}" registered successfully on PlayerRegistry!`);
@@ -229,7 +226,7 @@ export default function RegisterPlayer() {
       setLoading(false);
       alert(`Transaction failed: ${contractError.message || contractError}`);
     }
-  }, [isContractPending, isConfirming, isConfirmed, contractError, hash]);
+  }, [isContractPending, contractError, hash]);
 
   const resetForm = () => {
     setName("");
@@ -322,10 +319,6 @@ export default function RegisterPlayer() {
                   <div className="flex justify-between">
                     <span className="text-zinc-400">STATUS:</span>
                     <span className="text-emerald-600 font-bold">CONFIRMED </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-400">REGISTRATION ID:</span>
-                    <span className="text-zinc-700 font-bold">{txDetails.hash}</span>
                   </div>
                   
                 </div>
