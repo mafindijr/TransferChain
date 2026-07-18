@@ -8,6 +8,7 @@ import Link from "next/link";
 import playerRegistryAbi from "@/abis/PlayerRegistry.json";
 import clubRegistryAbi from "@/abis/ClubRegistry.json";
 import transferMarketplaceAbi from "@/abis/TransferMarketplace.json";
+import { toast } from "react-toastify";
 
 interface PlayerDetails {
   id: number;
@@ -257,19 +258,19 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
         ]
       }, {
         onSuccess: (txHash) => {
-          alert(`Marketplace Listing created successfully! Tx: ${txHash}`);
+          toast.success(`Marketplace Listing created successfully!`);
           fetchPlayerDetails();
           setListPrice("");
           setSubmittingListing(false);
         },
         onError: (err) => {
-          alert(`Transaction failed: ${err.message || err}`);
+          toast.error(`Transaction failed: ${err.message || err}`);
           setSubmittingListing(false);
         }
       });
     } catch (err: any) {
       console.error("Error listing player:", err);
-      alert(`Error: ${err.message || err}`);
+      toast.error(`Error: ${err.message || err}`);
       setSubmittingListing(false);
     }
   };
@@ -293,19 +294,19 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
         ]
       }, {
         onSuccess: (txHash) => {
-          alert(`Bid submitted successfully! Tx: ${txHash}`);
+          toast.success(`Bid submitted successfully!`);
           fetchPlayerDetails();
           setOfferAmount("");
           setSubmittingOffer(false);
         },
         onError: (err) => {
-          alert(`Transaction failed: ${err.message || err}`);
+          toast.error(`Transaction failed: ${err.message || err}`);
           setSubmittingOffer(false);
         }
       });
     } catch (err: any) {
       console.error("Error submitting offer:", err);
-      alert(`Error: ${err.message || err}`);
+      toast.error(`Error: ${err.message || err}`);
       setSubmittingOffer(false);
     }
   };

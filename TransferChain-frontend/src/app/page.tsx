@@ -3,6 +3,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 import { useAccount } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
 import Link from "next/link";
@@ -430,15 +431,9 @@ export default function Home() {
     buyer: "0x32A41f021dde4a25abf6f49291f422e02e825a00",
   });
 
-  // Notifications State
-  const [notification, setNotification] = useState<string | null>(null);
-
   // Helper to trigger UI success notifications
   const triggerNotification = (msg: string) => {
-    setNotification(msg);
-    setTimeout(() => {
-      setNotification(null);
-    }, 5000);
+    toast.success(msg);
   };
 
   // Helper to add blockchain logs
@@ -778,14 +773,6 @@ export default function Home() {
       )}
 
       {/* Top Notification Toast */}
-      {notification && (
-        <div className="fixed bottom-6 right-6 bg-[#dd1515] text-white border-2 border-white px-6 py-4 rounded shadow-2xl z-[99999] animate-bounce flex items-center gap-3">
-          <svg className="w-6 h-6 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span className="font-bold tracking-wide">{notification}</span>
-        </div>
-      )}
 
       <Header />
 

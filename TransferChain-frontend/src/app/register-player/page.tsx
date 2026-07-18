@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useAccount, useWriteContract } from "wagmi";
 import { useAppKit } from "@reown/appkit/react";
 import playerRegistry from "@/abis/PlayerRegistry.json";
+import { toast } from "react-toastify";
 
 // Types corresponding to TransferChain Smart Contracts
 interface Player {
@@ -98,16 +99,6 @@ export default function RegisterPlayer() {
   const [success, setSuccess] = useState(false);
   const [txDetails, setTxDetails] = useState({ hash: "", block: 0 });
 
-  // Notifications State
-  const [notification, setNotification] = useState<string | null>(null);
-
-  const triggerNotification = (msg: string) => {
-    setNotification(msg);
-    setTimeout(() => {
-      setNotification(null);
-    }, 5000);
-  };
-
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -133,7 +124,7 @@ export default function RegisterPlayer() {
         // Construct the IPFS URL using a public gateway
         const ipfsURL = `https://amethyst-patient-pheasant-516.mypinata.cloud/ipfs/${data.ipfsHash}`;
         setImageURI(ipfsURL);
-        triggerNotification("Player portrait uploaded to IPFS successfully!");
+        toast.success("Player portrait uploaded to IPFS successfully!");
       } else {
         alert("Upload failed: No IPFS hash received from API.");
       }
@@ -263,7 +254,7 @@ export default function RegisterPlayer() {
               setTxDetails({ hash: txHash, block: log.block });
             }
           }
-          triggerNotification(`Player "${currentPlayerName}" registered successfully on PlayerRegistry!`);
+          toast.success(`Player "${currentPlayerName}" registered successfully on PlayerRegistry!`);
         },
         onError: (err) => {
           setLoading(false);
@@ -327,14 +318,6 @@ export default function RegisterPlayer() {
       <Header />
 
       {/* Notifications Toast */}
-      {notification && (
-        <div className="fixed bottom-6 right-6 bg-[#dd1515] text-white border-2 border-white px-6 py-4 rounded shadow-2xl z-[99999] animate-bounce flex items-center gap-3">
-          <svg className="w-6 h-6 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span className="font-bold tracking-wide">{notification}</span>
-        </div>
-      )}
 
       {/* Top Banner (Clean Dark Theme) */}
       <div className="bg-[#111111] text-white py-16 border-b border-[#dd1515]/20">
