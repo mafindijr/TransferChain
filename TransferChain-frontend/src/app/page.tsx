@@ -1,5 +1,7 @@
 "use client";
 
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import React, { useState, useEffect } from "react";
 
 // Types corresponding to TransferChain Smart Contracts
@@ -209,7 +211,7 @@ export default function Home() {
       position: "Forward",
       age: 27,
       nationality: "France",
-      imageURI: "/img/soccer/soccer-1.jpg",
+      imageURI: "/img/players/Mbappe.jpg",
       status: "Active",
       registeredAt: "2026-07-10 15:10",
       currentClub: "FC Bayern Munich",
@@ -222,7 +224,7 @@ export default function Home() {
       age: 25,
       nationality: "Norway",
       metadataURI: "ipfs://bafybeipplayer2",
-      imageURI: "/img/soccer/soccer-2.jpg",
+      imageURI: "/img/players/Haaland.png",
       status: "Active",
       registeredAt: "2026-07-11 11:00",
       currentClub: "Manchester United",
@@ -235,7 +237,7 @@ export default function Home() {
       age: 23,
       nationality: "England",
       metadataURI: "ipfs://bafybeipplayer3",
-      imageURI: "/img/soccer/soccer-3.jpg",
+      imageURI: "/img/players/Jude.png",
       status: "Active",
       registeredAt: "2026-07-11 13:20",
       currentClub: "Real Madrid CF",
@@ -248,7 +250,7 @@ export default function Home() {
       age: 23,
       nationality: "Germany",
       metadataURI: "ipfs://bafybeipplayer4",
-      imageURI: "/img/soccer/soccer-4.jpg",
+      imageURI: "/img/players/Musiala.jpg",
       status: "Active",
       registeredAt: "2026-07-12 10:05",
       currentClub: "FC Bayern Munich",
@@ -722,84 +724,11 @@ export default function Home() {
         </div>
       )}
 
-      {/* 1. Header Top Info Bar (Specer style: Clean Dark) */}
-      <div className="bg-[#111111] border-b border-[#dd1515]/20 text-[11px] py-3 text-zinc-400">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center">
-          <div className="flex items-center gap-6">
-            <span className="text-[#dd1515] font-bold flex items-center gap-1.5 animate-pulse">
-              <span className="w-2 h-2 rounded-full bg-[#dd1515]" />
-              PROTOCOL OPERATIONAL
-            </span>
-            <span className="hidden md:inline">
-              NETWORK: <strong className="text-zinc-200">INJECTIVE EVM MAINNET</strong>
-            </span>
-            <span className="hidden md:inline">
-              GAS: <strong className="text-zinc-200">12 GWEI</strong>
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <a href="#contracts" className="hover:text-white transition-colors">Smart Contracts</a>
-            <span className="text-zinc-700">|</span>
-            <a href="#console" className="hover:text-white transition-colors">dApp Console</a>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Main Header / Nav (Specer Theme: Glassmorphic Translucent Navbar) */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md text-zinc-950 border-b border-zinc-200/50 shadow-sm transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center h-20">
-          
-          {/* Logo & Protocol Title */}
-          <div className="flex items-center gap-3">
-            <div className="bg-[#dd1515] w-12 h-12 flex items-center justify-center text-white font-black text-2xl tracking-tighter">
-              TC
-            </div>
-            <div>
-              <span className="text-2xl font-black tracking-tight text-zinc-950">
-                TRANSFER<span className="text-[#dd1515]">CHAIN</span>
-              </span>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black -mt-1">
-                ON-CHAIN FOOTBALL REGISTRY & ESCROW
-              </p>
-            </div>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-8 font-extrabold text-xs uppercase tracking-wider text-zinc-900">
-            <a href="#hero" className="border-b-2 border-[#dd1515] text-[#dd1515] pb-1 hover:text-[#dd1515] transition-all">HOME</a>
-            <a href="#live-agreements" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">AGREEMENTS</a>
-            <a href="#players" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">PLAYER FEED</a>
-            <a href="#activity" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">LEDGER</a>
-            <a href="#console" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">CONSOLE</a>
-          </nav>
-
-          {/* Wallet Actions */}
-          <div className="flex items-center gap-3">
-            {walletConnected ? (
-              <div className="flex items-center gap-2.5">
-                <span className="hidden sm:inline bg-[#f2f3f5] px-3 py-2 text-xs font-mono font-bold border border-zinc-200 text-zinc-700">
-                  0x71C7...976F
-                </span>
-                <button
-                  id="wallet-disconnect-btn"
-                  onClick={handleConnectWallet}
-                  className="bg-[#dd1515] hover:bg-[#b00f0f] text-white px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors"
-                >
-                  Disconnect
-                </button>
-              </div>
-            ) : (
-              <button
-                id="wallet-connect-btn"
-                onClick={handleConnectWallet}
-                className="bg-[#111111] hover:bg-[#dd1515] text-white px-6 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300"
-              >
-                Connect Wallet
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
+      <Header
+        walletConnected={walletConnected}
+        walletAddress={walletAddress}
+        handleConnectWallet={handleConnectWallet}
+      />
 
       {/* 3. Hero Section (Specer Background Style: High contrast sports header) */}
       <section
@@ -1003,7 +932,7 @@ export default function Home() {
           <div className="flex justify-between items-end border-b border-zinc-200 pb-5 mb-10">
             <div>
               <span className="text-xs font-extrabold text-[#dd1515] tracking-widest uppercase">Verified Profiles</span>
-              <h2 className="text-3xl font-black text-zinc-950 uppercase tracking-tight">Registered Player Directory</h2>
+              <h2 className="text-3xl font-black text-zinc-950 uppercase tracking-tight">Marketplace</h2>
             </div>
             <a href="#console" className="hidden sm:inline bg-zinc-900 hover:bg-[#dd1515] text-white font-extrabold text-xs uppercase tracking-wider px-4 py-3.5 transition-colors">
               + Register New Player
@@ -1062,7 +991,7 @@ export default function Home() {
                     }}
                     className="block text-center bg-[#dd1515] hover:bg-zinc-950 text-white font-extrabold text-xs uppercase py-3.5 tracking-wider transition-all duration-300"
                   >
-                    Transfer Console Action
+                    Buy Player
                   </a>
                 </div>
               </div>
@@ -1572,83 +1501,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 9. Footer (Specer Footer Background Style: Dark theme) */}
-      <footer
-        className="relative bg-[#111111] text-zinc-400 py-16 border-t border-zinc-950 bg-cover bg-center"
-        style={{
-          backgroundImage: "linear-gradient(to top, rgba(17,17,17,0.99), rgba(17,17,17,0.92)), url('/img/footer-bg.jpg')",
-        }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-            
-            {/* Col 1 */}
-            <div className="space-y-4">
-              <span className="text-2xl font-black tracking-tighter text-white uppercase">
-                TRANSFER<span className="text-[#dd1515]">CHAIN</span>
-              </span>
-              <p className="text-xs leading-relaxed text-zinc-400">
-                A trustless settlement registry and transfer escrow built on smart contracts. We ensure safety, accuracy, and compliance for professional sports transfers.
-              </p>
-            </div>
-
-            {/* Col 2 */}
-            <div className="space-y-4">
-              <h4 className="text-white font-bold text-sm uppercase tracking-wider border-b border-[#dd1515] pb-2 inline-block">
-                Smart Contracts
-              </h4>
-              <ul className="space-y-2 text-xs font-mono">
-                <li><a href="#contracts" className="hover:text-white transition-colors">ClubRegistry.sol</a></li>
-                <li><a href="#contracts" className="hover:text-white transition-colors">PlayerRegistry.sol</a></li>
-                <li><a href="#contracts" className="hover:text-white transition-colors">TransferMarketplace.sol</a></li>
-                <li><a href="#contracts" className="hover:text-white transition-colors">Escrow.sol</a></li>
-              </ul>
-            </div>
-
-            {/* Col 3 */}
-            <div className="space-y-4">
-              <h4 className="text-white font-bold text-sm uppercase tracking-wider border-b border-[#dd1515] pb-2 inline-block">
-                Documentation
-              </h4>
-              <ul className="space-y-2 text-xs">
-                <li><a href="#" className="hover:text-white transition-colors">Protocol Architecture</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Zero-Knowledge Specs</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Audit Reports</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Developer SDK Docs</a></li>
-              </ul>
-            </div>
-
-            {/* Col 4 */}
-            <div className="space-y-4">
-              <h4 className="text-white font-bold text-sm uppercase tracking-wider border-b border-[#dd1515] pb-2 inline-block">
-                Newsletter
-              </h4>
-              <p className="text-xs">
-                Sign up to receive updates on settled transfers, registry listings, and protocol events.
-              </p>
-              <div className="flex">
-                <input
-                  type="email"
-                  placeholder="Enter email"
-                  className="bg-zinc-800 border border-zinc-700 text-xs px-3 py-2 text-white focus:outline-none w-full"
-                />
-                <button className="bg-[#dd1515] hover:bg-[#b00f0f] text-white px-4 font-bold text-xs uppercase tracking-wider">
-                  SEND
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-12 pt-8 border-t border-zinc-800/80 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-zinc-500">
-            <p>© {new Date().getFullYear()} TransferChain Protocol. All Rights Reserved. Designed with Specer Sports Theme.</p>
-            <div className="flex gap-6">
-              <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-white transition-colors">Security Disclosures</a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
