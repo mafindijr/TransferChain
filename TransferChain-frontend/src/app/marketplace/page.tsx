@@ -7,6 +7,9 @@ import { usePublicClient, useAccount } from "wagmi";
 import Link from "next/link";
 import playerRegistryAbi from "@/abis/PlayerRegistry.json";
 
+const PlayerRegistryAddress = process.env.NEXT_PUBLIC_PLAYER_REGISTRY || "0x49335199e4121fc332cb5b11ce704250dea92cc8";
+const TransferMarketplaceAddress = process.env.NEXT_PUBLIC_TRANSFER_MARKET_PLACE || "0x6bc6dd2cc4f5c2c1ab6b0387ed95ec5b543eef1a";
+
 interface PlayerListing {
   id: number;
   owner: string;
@@ -41,7 +44,7 @@ export default function Marketplace() {
 
       // 1. Fetch nextPlayerId from PlayerRegistry contract
       const nextId = await publicClient.readContract({
-        address: "0x49335199e4121fc332cb5b11ce704250dea92cc8",
+        address: PlayerRegistryAddress as `0x${string}`,
         abi: playerRegistryAbi,
         functionName: "nextPlayerId"
       }) as bigint;
@@ -52,7 +55,7 @@ export default function Marketplace() {
       let activeListings = new Map<number, { listingId: number; price: bigint; seller: string }>();
       try {
         const nextLId = await publicClient.readContract({
-          address: "0x6bc6dd2cc4f5c2c1ab6b0387ed95ec5b543eef1a",
+          address: TransferMarketplaceAddress as `0x${string}`,
           abi: [
             {
               "type": "function",
@@ -69,7 +72,7 @@ export default function Marketplace() {
         for (let i = 1; i <= totalListings; i++) {
           try {
             const listing = await publicClient.readContract({
-              address: "0x6bc6dd2cc4f5c2c1ab6b0387ed95ec5b543eef1a",
+              address: TransferMarketplaceAddress as `0x${string}`,
               abi: [
                 {
                   "type": "function",
@@ -119,7 +122,7 @@ export default function Marketplace() {
       for (let i = 1; i <= totalPlayers; i++) {
         try {
           const ownerAddress = await publicClient.readContract({
-            address: "0x49335199e4121fc332cb5b11ce704250dea92cc8",
+            address: PlayerRegistryAddress as `0x${string}`,
             abi: playerRegistryAbi,
             functionName: "getPlayerOwner",
             args: [BigInt(i)]
@@ -127,7 +130,7 @@ export default function Marketplace() {
 
           if (ownerAddress && ownerAddress !== "0x0000000000000000000000000000000000000000") {
             const onChainPlayer = await publicClient.readContract({
-              address: "0x49335199e4121fc332cb5b11ce704250dea92cc8",
+              address: PlayerRegistryAddress as `0x${string}`,
               abi: playerRegistryAbi,
               functionName: "getPlayer",
               args: [ownerAddress]
@@ -221,7 +224,7 @@ export default function Marketplace() {
         try {
           // 1. Scrape PlayerRegistered logs from PlayerRegistry contract (within safe block range)
           playerLogs = await publicClient.getLogs({
-            address: "0x49335199e4121fc332cb5b11ce704250dea92cc8",
+            address: PlayerRegistryAddress as `0x${string}`,
             event: {
               type: "event",
               name: "PlayerRegistered",
@@ -247,7 +250,7 @@ export default function Marketplace() {
         try {
           // 2. Scrape ListingCreated logs from TransferMarketplace contract (within safe block range)
           listingLogs = await publicClient.getLogs({
-            address: "0x6bc6dd2cc4f5c2c1ab6b0387ed95ec5b543eef1a",
+            address: TransferMarketplaceAddress as `0x${string}`,
             event: {
               type: "event",
               name: "ListingCreated",
@@ -290,7 +293,7 @@ export default function Marketplace() {
 
             try {
               const onChainPlayer = await publicClient.readContract({
-                address: "0x49335199e4121fc332cb5b11ce704250dea92cc8",
+                address: PlayerRegistryAddress as `0x${string}`,
                 abi: playerRegistryAbi,
                 functionName: "getPlayer",
                 args: [ownerAddress]
@@ -395,12 +398,20 @@ export default function Marketplace() {
                 This page directly queries Injective EVM Testnet event logs (<code className="text-zinc-300 font-mono">PlayerRegistered</code> and <code className="text-zinc-300 font-mono">ListingCreated</code>) and displays players registered in the smart contract registry.
               </p>
             </div>
-            <Link
-              href="/register-player"
-              className="bg-[#dd1515] hover:bg-white hover:text-black text-white font-extrabold text-xs uppercase px-6 py-3.5 transition-colors tracking-wider"
-            >
-              + Register New Player
-            </Link>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/register-player"
+                className="bg-[#dd1515] hover:bg-white hover:text-black text-white font-extrabold text-xs uppercase px-6 py-3.5 transition-colors tracking-wider"
+              >
+                + Register New Player
+              </Link>
+              <Link
+                href="/clubs/register"
+                className="bg-zinc-800 hover:bg-[#dd1515] text-white font-extrabold text-xs uppercase px-6 py-3.5 transition-colors tracking-wider border border-zinc-700 hover:border-[#dd1515]"
+              >
+                + Register New Club
+              </Link>
+            </div>
           </div>
         </div>
       </div>

@@ -993,12 +993,20 @@ export default function Home() {
               <span className="text-xs font-extrabold text-[#dd1515] tracking-widest uppercase">Verified Profiles</span>
               <h2 className="text-3xl font-black text-zinc-950 uppercase tracking-tight">Marketplace</h2>
             </div>
-            <Link
-              href="/register-player"
-              className="hidden sm:inline-block bg-zinc-900 hover:bg-[#dd1515] text-white font-extrabold text-xs uppercase tracking-wider px-4 py-3.5 transition-colors"
-            >
-              + Register New Player
-            </Link>  
+            <div className="hidden sm:flex gap-3">
+              <Link
+                href="/register-player"
+                className="bg-zinc-900 hover:bg-[#dd1515] text-white font-extrabold text-xs uppercase tracking-wider px-4 py-3.5 transition-colors"
+              >
+                + Register Player
+              </Link>
+              <Link
+                href="/clubs/register"
+                className="bg-zinc-100 hover:bg-[#dd1515] hover:text-white text-zinc-900 font-extrabold text-xs uppercase tracking-wider px-4 py-3.5 transition-colors border border-zinc-300"
+              >
+                + Register Club
+              </Link>
+            </div>
           </div>
 
           {/* Grid of Players */}

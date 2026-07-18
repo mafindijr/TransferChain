@@ -4,11 +4,12 @@ const IPFS_GATEWAY = "https://amethyst-patient-pheasant-516.mypinata.cloud/ipfs/
 
 export async function GET(
   request: Request,
-  { params }: { params: { cid: string[] } }
+  { params }: { params: Promise<{ cid: string[] }> }
 ) {
   // The `cid` param will be an array of path segments.
   // e.g., /api/ipfs/bafy.../metadata.json -> ['bafy...', 'metadata.json']
-  const cidPath = params.cid.join('/');
+  const { cid } = await params;
+  const cidPath = cid.join('/');
 
   if (!cidPath) {
     return new NextResponse('CID path is required', { status: 400 });

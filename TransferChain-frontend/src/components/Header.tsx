@@ -51,13 +51,11 @@ export default function Header() {
 
           {/* Navigation Links */}
           <nav className="hidden lg:flex items-center gap-8 font-extrabold text-xs uppercase tracking-wider text-zinc-900">
-            <Link href="/#hero" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">HOME</Link>
-            <Link href="/#live-agreements" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">AGREEMENTS</Link>
+            <Link href="/" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">HOME</Link>
             <Link href="/marketplace" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">MARKETPLACE</Link>
-            <Link href="/#players" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">PLAYER FEED</Link>
-            <Link href="/#activity" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">LEDGER</Link>
-            <Link href="/#console" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">CONSOLE</Link>
+            <Link href="/clubs" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">CLUBS</Link>
             <Link href="/register-player" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">REGISTER PLAYER</Link>
+            <Link href="/clubs/register" className="border-b-2 border-transparent pb-1 hover:border-[#dd1515] hover:text-[#dd1515] transition-all">REGISTER CLUB</Link>
           </nav>
 
           {/* Wallet Actions */}
