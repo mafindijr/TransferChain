@@ -3,6 +3,8 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import React, { useState, useEffect } from "react";
+import { useAccount } from "wagmi";
+import { useAppKit } from "@reown/appkit/react";
 
 // Types corresponding to TransferChain Smart Contracts
 interface Club {
@@ -113,25 +115,11 @@ export default function Home() {
     };
   }, []);
 
-  // Wallet Connection Simulation
-  const [walletConnected, setWalletConnected] = useState(false);
-  const [walletAddress, setWalletAddress] = useState("");
-
-  // Connect wallet helper
-  const handleConnectWallet = () => {
-    if (walletConnected) {
-      setWalletConnected(false);
-      setWalletAddress("");
-    } else {
-      setWalletConnected(true);
-      setWalletAddress("0x71C7656EC7ab88b098defB751B7401B5f6d8976F");
-      addLog(
-        "WalletConnected",
-        "ProtocolAccess",
-        `Wallet 0x71C7...976F connected to Injective EVM`
-      );
-    }
-  };
+  // Web3 Connection hooks
+  const { address, isConnected } = useAccount();
+  const { open } = useAppKit();
+  const walletConnected = isConnected;
+  const walletAddress = address || "";
 
   // State arrays populated with Specer Theme references & TransferChain contract parameters
   const [clubs, setClubs] = useState<Club[]>([
@@ -342,6 +330,64 @@ export default function Home() {
     },
   ]);
 
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedClubs = localStorage.getItem("tc_clubs");
+      if (storedClubs) setClubs(JSON.parse(storedClubs));
+      else localStorage.setItem("tc_clubs", JSON.stringify(clubs));
+
+      const storedPlayers = localStorage.getItem("tc_players");
+      if (storedPlayers) setPlayers(JSON.parse(storedPlayers));
+      else localStorage.setItem("tc_players", JSON.stringify(players));
+
+      const storedListings = localStorage.getItem("tc_listings");
+      if (storedListings) setListings(JSON.parse(storedListings));
+      else localStorage.setItem("tc_listings", JSON.stringify(listings));
+
+      const storedOffers = localStorage.getItem("tc_offers");
+      if (storedOffers) setOffers(JSON.parse(storedOffers));
+      else localStorage.setItem("tc_offers", JSON.stringify(offers));
+
+      const storedLogs = localStorage.getItem("tc_logs");
+      if (storedLogs) setLogs(JSON.parse(storedLogs));
+      else localStorage.setItem("tc_logs", JSON.stringify(logs));
+
+      setIsMounted(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem("tc_clubs", JSON.stringify(clubs));
+    }
+  }, [clubs, isMounted]);
+
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem("tc_players", JSON.stringify(players));
+    }
+  }, [players, isMounted]);
+
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem("tc_listings", JSON.stringify(listings));
+    }
+  }, [listings, isMounted]);
+
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem("tc_offers", JSON.stringify(offers));
+    }
+  }, [offers, isMounted]);
+
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem("tc_logs", JSON.stringify(logs));
+    }
+  }, [logs, isMounted]);
+
   // Console Active Form Tab
   const [consoleTab, setConsoleTab] = useState<"club" | "player" | "list" | "offer" | "escrow">("club");
 
@@ -464,15 +510,30 @@ export default function Home() {
       return;
     }
 
-    const newPlayer: Player = {
-      id: players.length + 1,
-      owner: walletAddress,
+    // 1. Simulate creating the off-chain metadata object
+    const playerMetadata = {
       name: playerForm.name,
       metadataURI: playerForm.metadataURI + Math.random().toString(36).substring(2, 8),
       position: playerForm.position,
       age: Number(playerForm.age),
       nationality: playerForm.nationality,
       imageURI: `/img/soccer/soccer-${(players.length % 4) + 1}.jpg`,
+      // In a real app, other details would be included here.
+    };
+
+    // 2. Simulate uploading metadata to IPFS and getting a URI.
+    // The contract only stores the name and this URI.
+    const simulatedMetadataURI = playerForm.metadataURI + Math.random().toString(36).substring(2, 10);
+
+    const newPlayer: Player = {
+      id: players.length + 1,
+      owner: walletAddress,
+      name: playerMetadata.name, // from metadata
+      metadataURI: simulatedMetadataURI, // The "IPFS" link to the full metadata
+      position: playerMetadata.position, // from metadata
+      age: playerMetadata.age, // from metadata
+      nationality: playerMetadata.nationality, // from metadata
+      imageURI: playerMetadata.imageURI, // from metadata
       status: "Active",
       registeredAt: new Date().toISOString().replace("T", " ").substring(0, 16),
       currentClub: "Free Agent",
@@ -480,6 +541,7 @@ export default function Home() {
 
     setPlayers([...players, newPlayer]);
     addLog("PlayerRegistered", "PlayerRegistry.sol", `Player Registered: ${newPlayer.name} (ID: ${newPlayer.id})`);
+    addLog("PlayerRegistered", "PlayerRegistry.sol", `Player Registered: ${newPlayer.name} (ID: ${newPlayer.id}) with metadata at ${simulatedMetadataURI}`);
     triggerNotification(`Player "${newPlayer.name}" registered successfully on PlayerRegistry!`);
     setPlayerForm({
       name: "",
@@ -724,11 +786,7 @@ export default function Home() {
         </div>
       )}
 
-      <Header
-        walletConnected={walletConnected}
-        walletAddress={walletAddress}
-        handleConnectWallet={handleConnectWallet}
-      />
+      <Header />
 
       {/* 3. Hero Section (Specer Background Style: High contrast sports header) */}
       <section
@@ -934,9 +992,12 @@ export default function Home() {
               <span className="text-xs font-extrabold text-[#dd1515] tracking-widest uppercase">Verified Profiles</span>
               <h2 className="text-3xl font-black text-zinc-950 uppercase tracking-tight">Marketplace</h2>
             </div>
-            <a href="#console" className="hidden sm:inline bg-zinc-900 hover:bg-[#dd1515] text-white font-extrabold text-xs uppercase tracking-wider px-4 py-3.5 transition-colors">
+            <a
+              href="/register/player"
+              className="hidden sm:inline-block bg-zinc-900 hover:bg-[#dd1515] text-white font-extrabold text-xs uppercase tracking-wider px-4 py-3.5 transition-colors"
+            >
               + Register New Player
-            </a>
+            </a>  
           </div>
 
           {/* Grid of Players */}
@@ -1138,7 +1199,7 @@ export default function Home() {
                   </p>
                   <button
                     id="console-connect-wallet-btn"
-                    onClick={handleConnectWallet}
+                    onClick={() => open()}
                     className="bg-[#dd1515] hover:bg-[#111111] text-white text-xs font-bold px-5 py-2.5 transition-colors uppercase tracking-wider"
                   >
                     Connect Wallet

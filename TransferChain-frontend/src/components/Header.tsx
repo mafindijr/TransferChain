@@ -3,17 +3,7 @@
 import React from "react";
 import ConnectButton from "./connectButton";
 
-interface HeaderProps {
-  walletConnected?: boolean;
-  walletAddress?: string;
-  handleConnectWallet?: () => void;
-}
-
-export default function Header({
-  walletConnected = false,
-  walletAddress = "",
-  handleConnectWallet,
-}: HeaderProps) {
+export default function Header() {
   return (
     <>
       {/* 1. Header Top Info Bar (Specer style: Clean Dark) */}
@@ -69,30 +59,6 @@ export default function Header({
 
           {/* Wallet Actions */}
           <div className="flex items-center gap-3">
-            {handleConnectWallet && (
-              walletConnected ? (
-                <div className="flex items-center gap-2.5">
-                  <span className="hidden sm:inline bg-[#f2f3f5] px-3 py-2 text-xs font-mono font-bold border border-zinc-200 text-zinc-700">
-                    {walletAddress ? `${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}` : "0x71C7...976F"}
-                  </span>
-                  <button
-                    id="wallet-disconnect-btn"
-                    onClick={handleConnectWallet}
-                    className="bg-[#dd1515] hover:bg-[#b00f0f] text-white px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors"
-                  >
-                    Disconnect
-                  </button>
-                </div>
-              ) : (
-                <button
-                  id="wallet-connect-btn"
-                  onClick={handleConnectWallet}
-                  className="bg-[#111111] hover:bg-[#dd1515] text-white px-6 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300"
-                >
-                  Connect Wallet
-                </button>
-              )
-            )}
             <ConnectButton />
           </div>
         </div>
