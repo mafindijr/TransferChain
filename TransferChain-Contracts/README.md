@@ -41,22 +41,32 @@ TransferChainAccessControl
 | `Escrow` | ERC-20 fund custody, release/refund flows |
 | `Treasury` | Protocol revenue, controlled withdrawals |
 
-## Deployments
+## Deployed Contracts
 
-### Injective EVM Testnet (Chain ID 1439)
+All TransferChain contracts are deployed on the **Injective EVM Testnet** (Chain ID `1439`) and are publicly verifiable on the [Injective Blockscout explorer](https://testnet.blockscout.injective.network/).
 
-| Contract | Address |
-|---|---|
-| TransferChainAccessControl | [`0x4ce4ac389cdb84c4e5cea2d0e9e65f1ecc8b87e5`](https://explorer.testnet.injective.network/address/0x4ce4ac389cdb84c4e5cea2d0e9e65f1ecc8b87e5) |
-| Treasury | [`0x0ea50ae90ed69bd029cc3e3cffce21f6e1e0b9bc`](https://explorer.testnet.injective.network/address/0x0ea50ae90ed69bd029cc3e3cffce21f6e1e0b9bc) |
-| TransferChainConfig | [`0xf0f67e6578e44230924bffd02ae94090136608f1`](https://explorer.testnet.injective.network/address/0xf0f67e6578e44230924bffd02ae94090136608f1) |
-| PlayerRegistry | [`0x49335199e4121fc332cb5b11ce704250dea92cc8`](https://explorer.testnet.injective.network/address/0x49335199e4121fc332cb5b11ce704250dea92cc8) |
-| ClubRegistry | [`0x873ae71139407889650b74b24da51643a0e680eb`](https://explorer.testnet.injective.network/address/0x873ae71139407889650b74b24da51643a0e680eb) |
-| TransferMarketplace | [`0x6bc6dd2cc4f5c2c1ab6b0387ed95ec5b543eef1a`](https://explorer.testnet.injective.network/address/0x6bc6dd2cc4f5c2c1ab6b0387ed95ec5b543eef1a) |
-| TransferAgreementManager | [`0x4e9865d82174376b1246e982311d85b8cc1297f8`](https://explorer.testnet.injective.network/address/0x4e9865d82174376b1246e982311d85b8cc1297f8) |
-| Escrow | [`0xded509f4c002e4013e96cec6b3ad87bf5213c68d`](https://explorer.testnet.injective.network/address/0xded509f4c002e4013e96cec6b3ad87bf5213c68d) |
+| Contract | Address | View on Blockscout |
+|---|---|---|
+| TransferChainAccessControl | `0x4ce4ac389cdb84c4e5cea2d0e9e65f1ecc8b87e5` | [View Contract](https://testnet.blockscout.injective.network/address/0x4ce4ac389cdb84c4e5cea2d0e9e65f1ecc8b87e5) |
+| TransferChainConfig | `0xf0f67e6578e44230924bffd02ae94090136608f1` | [View Contract](https://testnet.blockscout.injective.network/address/0xf0f67e6578e44230924bffd02ae94090136608f1) |
+| PlayerRegistry | `0x49335199e4121fc332cb5b11ce704250dea92cc8` | [View Contract](https://testnet.blockscout.injective.network/address/0x49335199e4121fc332cb5b11ce704250dea92cc8) |
+| ClubRegistry | `0x873ae71139407889650b74b24da51643a0e680eb` | [View Contract](https://testnet.blockscout.injective.network/address/0x873ae71139407889650b74b24da51643a0e680eb) |
+| TransferMarketplace | `0x6bc6dd2cc4f5c2c1ab6b0387ed95ec5b543eef1a` | [View Contract](https://testnet.blockscout.injective.network/address/0x6bc6dd2cc4f5c2c1ab6b0387ed95ec5b543eef1a) |
+| TransferAgreementManager | `0x4e9865d82174376b1246e982311d85b8cc1297f8` | [View Contract](https://testnet.blockscout.injective.network/address/0x4e9865d82174376b1246e982311d85b8cc1297f8) |
+| Escrow | `0xded509f4c002e4013e96cec6b3ad87bf5213c68d` | [View Contract](https://testnet.blockscout.injective.network/address/0xded509f4c002e4013e96cec6b3ad87bf5213c68d) |
+| Treasury | `0x0ea50ae90ed69bd029cc3e3cffce21f6e1e0b9bc` | [View Contract](https://testnet.blockscout.injective.network/address/0x0ea50ae90ed69bd029cc3e3cffce21f6e1e0b9bc) |
 
 Full deployment manifest: [`deployments/1439.json`](deployments/1439.json)
+
+## Verify Deployment
+
+All deployed contracts can be inspected and interacted with directly through [Blockscout](https://testnet.blockscout.injective.network/). No additional tooling is required.
+
+- **Inspect source code** — verified Solidity source and ABIs are available on every contract page.
+- **Read contract state** — use the "Read Contract" tab to query public functions and view on-chain state.
+- **Write contract methods** — connect a wallet via the "Write Contract" tab to call state-changing functions.
+- **View emitted events** — browse the "Events" tab or filter logs for any contract.
+- **Inspect transactions** — trace every transaction, including internal calls and gas usage.
 
 ## Security Model
 
