@@ -8,6 +8,7 @@ import Link from "next/link";
 import playerRegistryAbi from "@/abis/PlayerRegistry.json";
 import clubRegistryAbi from "@/abis/ClubRegistry.json";
 import transferMarketplaceAbi from "@/abis/TransferMarketplace.json";
+import transferAgreementManagerAbi from "@/abis/TransferAgreementManager.json";
 import { toast } from "react-toastify";
 
 interface PlayerDetails {
@@ -29,9 +30,33 @@ interface PlayerDetails {
   } | null;
 }
 
+interface ClauseSet {
+  transferFee: bigint;
+  signingBonus: bigint;
+  sellOnPercentage: bigint;
+  releaseClause: bigint;
+  installmentAmount: bigint;
+  appearanceBonus: bigint;
+  goalBonus: bigint;
+  metadataURI: string;
+}
+
+interface Agreement {
+  id: number;
+  listingId: number;
+  buyer: string;
+  seller: string;
+  status: number;
+  clauses: ClauseSet;
+  buyerSigned: boolean;
+  sellerSigned: boolean;
+  createdAt: number;
+}
+
 const PlayerRegistryAddress = process.env.NEXT_PUBLIC_PLAYER_REGISTRY || "0x49335199e4121fc332cb5b11ce704250dea92cc8";
 const ClubRegistryAddress = process.env.NEXT_PUBLIC_CLUB_REGISTRY || "0x873ae71139407889650b74b24da51643a0e680eb";
 const TransferMarketplaceAddress = process.env.NEXT_PUBLIC_TRANSFER_MARKET_PLACE || "0x6bc6dd2cc4f5c2c1ab6b0387ed95ec5b543eef1a";
+const TransferAgreementManagerAddress = process.env.NEXT_PUBLIC_TRANSFER_AGREEMENT_MANAGER || "0x4e9865d82174376b1246e982311d85b8cc1297f8";
 
 export default function PlayerPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -41,6 +66,7 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
   
   const [playerId, setPlayerId] = useState<number | null>(null);
   const [player, setPlayer] = useState<PlayerDetails | null>(null);
+  const [agreements, setAgreements] = useState<Agreement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +75,19 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
   const [submittingOffer, setSubmittingOffer] = useState(false);
   const [listPrice, setListPrice] = useState("");
   const [submittingListing, setSubmittingListing] = useState(false);
+
+  // Agreement Clause form states
+  const [transferFee, setTransferFee] = useState("");
+  const [signingBonus, setSigningBonus] = useState("0");
+  const [sellOnPercentage, setSellOnPercentage] = useState("0");
+  const [releaseClause, setReleaseClause] = useState("0");
+  const [installmentAmount, setInstallmentAmount] = useState("0");
+  const [appearanceBonus, setAppearanceBonus] = useState("0");
+  const [goalBonus, setGoalBonus] = useState("0");
+  const [creatingAgreement, setCreatingAgreement] = useState(false);
+
+  const [approvingAgreementId, setApprovingAgreementId] = useState<number | null>(null);
+  const [rejectingAgreementId, setRejectingAgreementId] = useState<number | null>(null);
 
   const currentId = resolvedParams?.id ? Number(resolvedParams.id) : null;
 
@@ -185,6 +224,7 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
                 seller: listing.seller,
                 status: Number(listing.status)
               };
+              setTransferFee(listing.price.toString());
               break;
             }
           } catch (err) {
@@ -208,6 +248,66 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
         registeredAt,
         listing: listingDetails
       });
+
+      // 4. Fetch Agreements from TransferAgreementManager contract
+      const fetchedAgreements: Agreement[] = [];
+      if (listingDetails) {
+        try {
+          const nextAgId = await publicClient.readContract({
+            address: TransferAgreementManagerAddress as `0x${string}`,
+            abi: [
+              {
+                "type": "function",
+                "name": "nextAgreementId",
+                "inputs": [],
+                "outputs": [{"name": "", "type": "uint256", "internalType": "uint256"}],
+                "stateMutability": "view"
+              }
+            ],
+            functionName: "nextAgreementId"
+          }) as bigint;
+
+          const totalAgreements = Number(nextAgId) - 1;
+          for (let i = 1; i <= totalAgreements; i++) {
+            try {
+              const agreement = await publicClient.readContract({
+                address: TransferAgreementManagerAddress as `0x${string}`,
+                abi: transferAgreementManagerAbi,
+                functionName: "getAgreement",
+                args: [BigInt(i)]
+              }) as any;
+
+              if (agreement && Number(agreement.listingId) === Number(listingDetails.listingId)) {
+                fetchedAgreements.push({
+                  id: Number(agreement.id),
+                  listingId: Number(agreement.listingId),
+                  buyer: agreement.buyer,
+                  seller: agreement.seller,
+                  status: Number(agreement.status),
+                  clauses: {
+                    transferFee: BigInt(agreement.clauses.transferFee),
+                    signingBonus: BigInt(agreement.clauses.signingBonus),
+                    sellOnPercentage: BigInt(agreement.clauses.sellOnPercentage),
+                    releaseClause: BigInt(agreement.clauses.releaseClause),
+                    installmentAmount: BigInt(agreement.clauses.installmentAmount),
+                    appearanceBonus: BigInt(agreement.clauses.appearanceBonus),
+                    goalBonus: BigInt(agreement.clauses.goalBonus),
+                    metadataURI: agreement.clauses.metadataURI
+                  },
+                  buyerSigned: agreement.buyerSigned,
+                  sellerSigned: agreement.sellerSigned,
+                  createdAt: Number(agreement.createdAt)
+                });
+              }
+            } catch (agErr) {
+              console.error(`Error loading agreement ${i}:`, agErr);
+            }
+          }
+        } catch (err) {
+          console.error("Error loading nextAgreementId:", err);
+        }
+      }
+      setAgreements(fetchedAgreements);
 
     } catch (err: any) {
       console.error("Error loading player details:", err);
@@ -311,6 +411,109 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
     }
   };
 
+  // Create Agreement Draft (createAgreement)
+  const handleCreateAgreement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!walletAddress || !player || !player.listing) return;
+
+    try {
+      setCreatingAgreement(true);
+
+      writeContract({
+        abi: transferAgreementManagerAbi,
+        address: TransferAgreementManagerAddress as `0x${string}`,
+        functionName: "createAgreement",
+        args: [
+          BigInt(player.listing.listingId),
+          walletAddress,
+          player.owner,
+          BigInt(transferFee),
+          BigInt(signingBonus),
+          BigInt(sellOnPercentage),
+          BigInt(releaseClause),
+          BigInt(installmentAmount),
+          BigInt(appearanceBonus),
+          BigInt(goalBonus),
+          player.metadataURI || "ipfs://bafybeipplayer"
+        ]
+      }, {
+        onSuccess: (txHash) => {
+          toast.success(`Agreement Draft initialized!`);
+          fetchPlayerDetails();
+          setCreatingAgreement(false);
+        },
+        onError: (err) => {
+          toast.error(`Agreement Draft failed: ${err.message || err}`);
+          setCreatingAgreement(false);
+        }
+      });
+    } catch (err: any) {
+      console.error("Error creating agreement:", err);
+      toast.error(`Error: ${err.message || err}`);
+      setCreatingAgreement(false);
+    }
+  };
+
+  // Approve Agreement (approveAgreement)
+  const handleApproveAgreement = async (agreementId: number) => {
+    if (!walletAddress) return;
+
+    try {
+      setApprovingAgreementId(agreementId);
+
+      writeContract({
+        abi: transferAgreementManagerAbi,
+        address: TransferAgreementManagerAddress as `0x${string}`,
+        functionName: "approveAgreement",
+        args: [BigInt(agreementId)]
+      }, {
+        onSuccess: (txHash) => {
+          toast.success(`Agreement Approved successfully! `);
+          fetchPlayerDetails();
+          setApprovingAgreementId(null);
+        },
+        onError: (err) => {
+          toast.error(`Approval failed: ${err.message || err}`);
+          setApprovingAgreementId(null);
+        }
+      });
+    } catch (err: any) {
+      console.error("Error approving agreement:", err);
+      toast.error(`Error: ${err.message || err}`);
+      setApprovingAgreementId(null);
+    }
+  };
+
+  // Reject Agreement (rejectAgreement)
+  const handleRejectAgreement = async (agreementId: number) => {
+    if (!walletAddress) return;
+
+    try {
+      setRejectingAgreementId(agreementId);
+
+      writeContract({
+        abi: transferAgreementManagerAbi,
+        address: TransferAgreementManagerAddress as `0x${string}`,
+        functionName: "rejectAgreement",
+        args: [BigInt(agreementId)]
+      }, {
+        onSuccess: (txHash) => {
+          toast.success(`Agreement Rejected!`);
+          fetchPlayerDetails();
+          setRejectingAgreementId(null);
+        },
+        onError: (err) => {
+          toast.error(`Rejection failed: ${err.message || err}`);
+          setRejectingAgreementId(null);
+        }
+      });
+    } catch (err: any) {
+      console.error("Error rejecting agreement:", err);
+      toast.error(`Error: ${err.message || err}`);
+      setRejectingAgreementId(null);
+    }
+  };
+
   const isPlayerOwner = walletAddress && player && walletAddress.toLowerCase() === player.owner.toLowerCase();
 
   return (
@@ -403,7 +606,13 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
                   </div>
                 </div>
 
-               
+                {/* Identity Ownership Information */}
+                <div className="bg-white border border-zinc-200 p-6 space-y-3 shadow-sm text-xs">
+                  <span className="text-zinc-400 font-extrabold uppercase text-[9px] tracking-wider block">Registrant Club Address</span>
+                  <div className="font-mono text-zinc-800 bg-zinc-50 border border-zinc-200 px-4 py-2.5 rounded break-all select-all font-bold">
+                    {player.owner}
+                  </div>
+                </div>
 
                 {/* Marketplace Escrow / Offer Options */}
                 <div className="bg-white border border-zinc-200 p-6 space-y-6 shadow-sm">
@@ -427,18 +636,9 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
                             <strong className="text-2xl font-black text-[#dd1515]">{Number(player.listing.price).toLocaleString()} USDC</strong>
                           </div>
                         </div>
-
-                        <div className="flex flex-col gap-2 w-full sm:w-auto">
-                          <Link
-                            href={`/#live-agreements`}
-                            className="bg-[#dd1515] hover:bg-zinc-950 text-white font-extrabold text-xs uppercase px-8 py-4 transition-colors text-center tracking-wider rounded-sm shadow-md shadow-[#dd1515]/20 hover:shadow-none"
-                          >
-                            Execute Instant Buy (Escrow)
-                          </Link>
-                        </div>
                       </div>
 
-                      {/* Submitting offer for listed player */}
+                      {/* Submitting offer / bid for listed player */}
                       <div className="bg-zinc-50 border border-zinc-200 p-5 rounded-sm text-xs space-y-3">
                         <h4 className="font-black text-zinc-800 uppercase text-[11px] tracking-wide">Place an Offer on this Listing</h4>
                         <p className="text-zinc-500">
@@ -456,12 +656,191 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
                           <button
                             type="submit"
                             disabled={submittingOffer}
-                            className="bg-zinc-950 hover:bg-[#dd1515] text-white px-6 font-extrabold text-[10px] uppercase tracking-wider transition-colors rounded-sm shadow-sm"
+                            className="bg-zinc-900 hover:bg-[#dd1515] text-white px-6 font-extrabold text-[10px] uppercase tracking-wider transition-colors rounded-sm shadow-sm"
                           >
                             {submittingOffer ? "Placing Bid..." : "Submit Bid"}
                           </button>
                         </form>
                       </div>
+
+                      {/* NEGOTIATION AND TRANSFER AGREEMENTS (createAgreement) */}
+                      {!isPlayerOwner && (
+                        <div className="bg-white border border-zinc-200 p-5 rounded-sm text-xs space-y-4">
+                          <div className="space-y-1">
+                            <h4 className="font-black text-[#dd1515] uppercase text-[11px] tracking-wide">Initialize Transfer Agreement Clauses</h4>
+                            <p className="text-zinc-500">
+                              Define the custom commercial clauses for this transfer. Submitting initialized clauses will deploy a draft agreement to the `TransferAgreementManager` contract.
+                            </p>
+                          </div>
+
+                          <form onSubmit={handleCreateAgreement} className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                            <div>
+                              <label className="text-zinc-400 block font-bold text-[9px] uppercase pb-1">Transfer Fee (USDC)</label>
+                              <input
+                                type="number"
+                                required
+                                value={transferFee}
+                                onChange={(e) => setTransferFee(e.target.value)}
+                                className="bg-white border border-zinc-300 text-xs px-3 py-2 text-zinc-800 w-full focus:outline-none focus:border-[#dd1515] font-mono font-bold"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-zinc-400 block font-bold text-[9px] uppercase pb-1">Signing Bonus (USDC)</label>
+                              <input
+                                type="number"
+                                required
+                                value={signingBonus}
+                                onChange={(e) => setSigningBonus(e.target.value)}
+                                className="bg-white border border-zinc-300 text-xs px-3 py-2 text-zinc-800 w-full focus:outline-none focus:border-[#dd1515] font-mono font-bold"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-zinc-400 block font-bold text-[9px] uppercase pb-1">Sell-On Clause (%)</label>
+                              <input
+                                type="number"
+                                required
+                                value={sellOnPercentage}
+                                onChange={(e) => setSellOnPercentage(e.target.value)}
+                                className="bg-white border border-zinc-300 text-xs px-3 py-2 text-zinc-800 w-full focus:outline-none focus:border-[#dd1515] font-mono font-bold"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-zinc-400 block font-bold text-[9px] uppercase pb-1">Release Clause (USDC)</label>
+                              <input
+                                type="number"
+                                required
+                                value={releaseClause}
+                                onChange={(e) => setReleaseClause(e.target.value)}
+                                className="bg-white border border-zinc-300 text-xs px-3 py-2 text-zinc-800 w-full focus:outline-none focus:border-[#dd1515] font-mono font-bold"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-zinc-400 block font-bold text-[9px] uppercase pb-1">Installment Amount (USDC)</label>
+                              <input
+                                type="number"
+                                required
+                                value={installmentAmount}
+                                onChange={(e) => setInstallmentAmount(e.target.value)}
+                                className="bg-white border border-zinc-300 text-xs px-3 py-2 text-zinc-800 w-full focus:outline-none focus:border-[#dd1515] font-mono font-bold"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-zinc-400 block font-bold text-[9px] uppercase pb-1">Appearance Bonus (USDC)</label>
+                              <input
+                                type="number"
+                                required
+                                value={appearanceBonus}
+                                onChange={(e) => setAppearanceBonus(e.target.value)}
+                                className="bg-white border border-zinc-300 text-xs px-3 py-2 text-zinc-800 w-full focus:outline-none focus:border-[#dd1515] font-mono font-bold"
+                              />
+                            </div>
+                            <div className="sm:col-span-2">
+                              <label className="text-zinc-400 block font-bold text-[9px] uppercase pb-1">Goal Bonus (USDC)</label>
+                              <input
+                                type="number"
+                                required
+                                value={goalBonus}
+                                onChange={(e) => setGoalBonus(e.target.value)}
+                                className="bg-white border border-zinc-300 text-xs px-3 py-2 text-zinc-800 w-full focus:outline-none focus:border-[#dd1515] font-mono font-bold"
+                              />
+                            </div>
+                            <div className="sm:col-span-2 pt-2">
+                              <button
+                                type="submit"
+                                disabled={creatingAgreement}
+                                className="bg-[#dd1515] hover:bg-zinc-900 text-white font-extrabold text-[10px] uppercase tracking-wider py-3 px-6 rounded-sm w-full transition-colors"
+                              >
+                                {creatingAgreement ? "Initializing Draft Agreement..." : "Initialize Transfer Agreement (Draft)"}
+                              </button>
+                            </div>
+                          </form>
+                        </div>
+                      )}
+
+                      {/* DETECTED ACTIVE AGREEMENTS ON-CHAIN (getAgreement + approve/reject) */}
+                      {agreements.length > 0 && (
+                        <div className="space-y-4 pt-4 border-t border-zinc-150">
+                          <h4 className="font-extrabold text-xs text-zinc-950 uppercase tracking-wider">
+                            Active Agreements on Listing
+                          </h4>
+
+                          <div className="space-y-4">
+                            {agreements.map((agreement) => {
+                              const isBuyer = walletAddress && walletAddress.toLowerCase() === agreement.buyer.toLowerCase();
+                              
+                              const statusLabel = 
+                                agreement.status === 0 ? "Draft" :
+                                agreement.status === 1 ? "Approved" :
+                                agreement.status === 2 ? "Rejected" :
+                                agreement.status === 3 ? "Expired" : "Signed";
+
+                              const statusBadge = 
+                                agreement.status === 0 ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" :
+                                agreement.status === 1 ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" :
+                                agreement.status === 2 ? "bg-red-500/10 text-red-500 border border-red-500/20" :
+                                agreement.status === 3 ? "bg-zinc-500/10 text-zinc-500 border border-zinc-500/20" :
+                                "bg-blue-500/10 text-blue-500 border border-blue-500/20";
+
+                              return (
+                                <div key={agreement.id} className="bg-zinc-50 border border-zinc-200 p-5 rounded-sm space-y-4 text-xs shadow-sm">
+                                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                    <div>
+                                      <span className="font-mono text-zinc-400 text-[10px] block">AGREEMENT ID</span>
+                                      <strong className="text-zinc-800 font-extrabold">Agreement ID #{agreement.id}</strong>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded ${statusBadge}`}>
+                                        {statusLabel}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-[11px] border-t border-b border-zinc-150 py-3 font-medium">
+                                    <div>
+                                      <span className="text-zinc-400 block uppercase text-[8px]">Fee</span>
+                                      <strong className="text-zinc-700 font-bold">{Number(agreement.clauses.transferFee).toLocaleString()} USDC</strong>
+                                    </div>
+                                    <div>
+                                      <span className="text-zinc-400 block uppercase text-[8px]">Bonus</span>
+                                      <strong className="text-zinc-700 font-bold">{Number(agreement.clauses.signingBonus).toLocaleString()} USDC</strong>
+                                    </div>
+                                    <div>
+                                      <span className="text-zinc-400 block uppercase text-[8px]">Sell-On</span>
+                                      <strong className="text-zinc-700 font-bold">{Number(agreement.clauses.sellOnPercentage)}%</strong>
+                                    </div>
+                                    <div>
+                                      <span className="text-zinc-400 block uppercase text-[8px]">Release</span>
+                                      <strong className="text-zinc-700 font-bold">{Number(agreement.clauses.releaseClause).toLocaleString()} USDC</strong>
+                                    </div>
+                                  </div>
+
+                                  
+
+                                  {/* Action Buttons for Buyer if agreement is in Draft status */}
+                                  {isBuyer && agreement.status === 0 && (
+                                    <div className="flex gap-2 pt-2">
+                                      <button
+                                        onClick={() => handleApproveAgreement(agreement.id)}
+                                        disabled={approvingAgreementId === agreement.id}
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[10px] uppercase tracking-wider px-5 py-2.5 rounded-sm transition-colors"
+                                      >
+                                        {approvingAgreementId === agreement.id ? "Approving..." : "Approve Agreement"}
+                                      </button>
+                                      <button
+                                        onClick={() => handleRejectAgreement(agreement.id)}
+                                        disabled={rejectingAgreementId === agreement.id}
+                                        className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-[10px] uppercase tracking-wider px-5 py-2.5 rounded-sm transition-colors"
+                                      >
+                                        {rejectingAgreementId === agreement.id ? "Rejecting..." : "Reject Agreement"}
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     /* CASE 2: PLAYER IS NOT CURRENTLY LISTED ON THE MARKETPLACE */
@@ -502,7 +881,7 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
                       ) : (
                         /* NON-OWNER INTERFACE: SHOW EXPLANATION */
                         <div className="bg-zinc-50 border border-zinc-200 p-5 rounded-sm text-xs text-zinc-500">
-                          This player is currently not listed for sale on the TransferMarketplace. Bidding on listings is disabled until the registrant owner club places the player on the market.
+                          This player is currently not listed for sale on the TransferMarketplace. Agreements can only be created once the player is listed.
                         </div>
                       )}
                     </div>
