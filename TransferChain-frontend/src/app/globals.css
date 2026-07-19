@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-geist-sans), sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+
+  /* Custom animations */
+  --animate-float: float 4s ease-in-out infinite;
+  --animate-pulse-glow: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-gold-glow: gold-glow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-slide-up: slide-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-orbit: orbit 6s linear infinite;
+  --animate-spin-slow: spin 20s linear infinite;
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-12px);
+    }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 10px rgba(221, 21, 21, 0.3), 0 0 5px rgba(221, 21, 21, 0.1);
+      border-color: rgba(221, 21, 21, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 25px rgba(221, 21, 21, 0.7), 0 0 10px rgba(221, 21, 21, 0.3);
+      border-color: rgba(221, 21, 21, 0.8);
+    }
+  }
+
+  @keyframes gold-glow {
+    0%, 100% {
+      filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.3));
+    }
+    50% {
+      filter: drop-shadow(0 0 25px rgba(251, 191, 36, 0.8));
+    }
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes orbit {
+    0% {
+      transform: rotate(0deg) translateX(70px) rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg) translateX(70px) rotate(-360deg);
+    }
+  }
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #111111;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #08090a;
+    --foreground: #f4f5f6;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-geist-sans), sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom scroll bar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #111111;
+}
+::-webkit-scrollbar-thumb {
+  background: #dd1515;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b00f0f;
+}
+
+.blur-bg-glass {
+  backdrop-filter: blur(16px);
+  background-color: rgba(255, 255, 255, 0.75);
+}
