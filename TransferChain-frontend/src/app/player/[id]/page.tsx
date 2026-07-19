@@ -9,11 +9,14 @@ import playerRegistryAbi from "@/abis/PlayerRegistry.json";
 import clubRegistryAbi from "@/abis/ClubRegistry.json";
 import transferMarketplaceAbi from "@/abis/TransferMarketplace.json";
 import transferAgreementManagerAbi from "@/abis/TransferAgreementManager.json";
+import escrowAbi from "@/abis/Escrow.json";
 import { toast } from "react-toastify";
 
 interface PlayerDetails {
   id: number;
   owner: string;
+  clubName?: string;
+  clubId?: number | null;
   name: string;
   metadataURI: string;
   position: string;
@@ -41,6 +44,17 @@ interface ClauseSet {
   metadataURI: string;
 }
 
+interface EscrowDeposit {
+  id: number;
+  token: string;
+  amount: bigint;
+  agreementId: number;
+  payer: string;
+  payee: string;
+  status: number;
+  createdAt: number;
+}
+
 interface Agreement {
   id: number;
   listingId: number;
@@ -51,12 +65,15 @@ interface Agreement {
   buyerSigned: boolean;
   sellerSigned: boolean;
   createdAt: number;
+  deposits?: EscrowDeposit[];
 }
 
 const PlayerRegistryAddress = process.env.NEXT_PUBLIC_PLAYER_REGISTRY || "0x49335199e4121fc332cb5b11ce704250dea92cc8";
 const ClubRegistryAddress = process.env.NEXT_PUBLIC_CLUB_REGISTRY || "0x873ae71139407889650b74b24da51643a0e680eb";
 const TransferMarketplaceAddress = process.env.NEXT_PUBLIC_TRANSFER_MARKET_PLACE || "0x6bc6dd2cc4f5c2c1ab6b0387ed95ec5b543eef1a";
 const TransferAgreementManagerAddress = process.env.NEXT_PUBLIC_TRANSFER_AGREEMENT_MANAGER || "0x4e9865d82174376b1246e982311d85b8cc1297f8";
+const EscrowAddress = process.env.NEXT_PUBLIC_ESCROW || "0xded509f4c002e4013e96cec6b3ad87bf5213c68d";
+const DefaultTokenAddress = process.env.NEXT_PUBLIC_PAYMENT_TOKEN || "0x0000000000000000000000000000000000000001";
 
 export default function PlayerPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -88,6 +105,23 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
 
   const [approvingAgreementId, setApprovingAgreementId] = useState<number | null>(null);
   const [rejectingAgreementId, setRejectingAgreementId] = useState<number | null>(null);
+
+  // Metadata Update States
+  const [isEditingMetadata, setIsEditingMetadata] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editPosition, setEditPosition] = useState("");
+  const [editAge, setEditAge] = useState("");
+  const [editNationality, setEditNationality] = useState("");
+  const [editImageURI, setEditImageURI] = useState("");
+  const [editMetadataURI, setEditMetadataURI] = useState("");
+  const [useDirectURI, setUseDirectURI] = useState(false);
+  const [updatingMetadata, setUpdatingMetadata] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Escrow States
+  const [depositingAgreementId, setDepositingAgreementId] = useState<number | null>(null);
+  const [releasingDepositId, setReleasingDepositId] = useState<number | null>(null);
+  const [refundingDepositId, setRefundingDepositId] = useState<number | null>(null);
 
   const currentId = resolvedParams?.id ? Number(resolvedParams.id) : null;
 
@@ -235,9 +269,48 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
         console.error("Error loading nextListingId:", err);
       }
 
+      // Fetch Club details from ClubRegistry
+      let clubName = "";
+      let clubId: number | null = null;
+      try {
+        const onChainClub = await publicClient.readContract({
+          address: ClubRegistryAddress as `0x${string}`,
+          abi: clubRegistryAbi,
+          functionName: "getClub",
+          args: [ownerAddress]
+        }) as any;
+
+        if (onChainClub && onChainClub.name && onChainClub.name.trim() !== "") {
+          clubName = onChainClub.name;
+          clubId = Number(onChainClub.id || 0);
+        }
+      } catch (clubErr) {
+        console.warn("Could not fetch club from ClubRegistry:", clubErr);
+      }
+
+      if (!clubName && typeof window !== "undefined") {
+        const storedClubs = localStorage.getItem("tc_clubs");
+        if (storedClubs) {
+          try {
+            const currentClubs = JSON.parse(storedClubs);
+            const foundClub = currentClubs.find((c: any) => c.owner && c.owner.toLowerCase() === ownerAddress.toLowerCase());
+            if (foundClub) {
+              clubName = foundClub.name;
+              clubId = foundClub.id;
+            }
+          } catch (e) {}
+        }
+      }
+
+      if (!clubName) {
+        clubName = `Club (${ownerAddress.substring(0, 6)}...${ownerAddress.substring(ownerAddress.length - 4)})`;
+      }
+
       setPlayer({ 
         id: currentId,
         owner: ownerAddress,
+        clubName,
+        clubId,
         name,
         metadataURI,
         position,
@@ -307,7 +380,54 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
           console.error("Error loading nextAgreementId:", err);
         }
       }
-      setAgreements(fetchedAgreements);
+
+      // 5. Fetch Escrow deposits on-chain via getDeposit for each agreement
+      try {
+        const nextDepId = await publicClient.readContract({
+          address: EscrowAddress as `0x${string}`,
+          abi: escrowAbi,
+          functionName: "nextDepositId"
+        }) as bigint;
+
+        const totalDeposits = Number(nextDepId);
+        const fetchedDeposits: EscrowDeposit[] = [];
+
+        for (let dId = 1; dId < totalDeposits; dId++) {
+          try {
+            const rawDeposit = await publicClient.readContract({
+              address: EscrowAddress as `0x${string}`,
+              abi: escrowAbi,
+              functionName: "getDeposit",
+              args: [BigInt(dId)]
+            }) as any;
+
+            if (rawDeposit && Number(rawDeposit.id) > 0) {
+              fetchedDeposits.push({
+                id: Number(rawDeposit.id),
+                token: rawDeposit.token,
+                amount: BigInt(rawDeposit.amount || 0),
+                agreementId: Number(rawDeposit.agreementId),
+                payer: rawDeposit.payer,
+                payee: rawDeposit.payee,
+                status: Number(rawDeposit.status),
+                createdAt: Number(rawDeposit.createdAt)
+              });
+            }
+          } catch (dErr) {
+            console.warn(`Could not fetch deposit ${dId}:`, dErr);
+          }
+        }
+
+        const agreementsWithDeposits = fetchedAgreements.map(ag => ({
+          ...ag,
+          deposits: fetchedDeposits.filter(d => d.agreementId === ag.id)
+        }));
+
+        setAgreements(agreementsWithDeposits);
+      } catch (escrowErr) {
+        console.warn("Could not fetch Escrow deposits:", escrowErr);
+        setAgreements(fetchedAgreements);
+      }
 
     } catch (err: any) {
       console.error("Error loading player details:", err);
@@ -514,6 +634,282 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
     }
   };
 
+  // ── Escrow Operations (Escrow.sol) ───────────────────────────
+
+  // 1. Deposit funds to Escrow for an agreement (deposit)
+  const handleEscrowDeposit = async (agreementId: number, payee: string, amount: bigint) => {
+    if (!walletAddress) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+
+    try {
+      setDepositingAgreementId(agreementId);
+
+      writeContract({
+        address: EscrowAddress as `0x${string}`,
+        abi: escrowAbi,
+        functionName: "deposit",
+        args: [
+          DefaultTokenAddress as `0x${string}`,
+          amount > BigInt(0) ? amount : BigInt(1000),
+          BigInt(agreementId),
+          payee as `0x${string}`
+        ]
+      }, {
+        onSuccess: () => {
+          toast.success(`Deposit created and funded successfully in Escrow!`);
+          fetchPlayerDetails();
+          setDepositingAgreementId(null);
+        },
+        onError: (err) => {
+          toast.error(`Escrow deposit failed: ${err.message || err}`);
+          setDepositingAgreementId(null);
+        }
+      });
+    } catch (err: any) {
+      console.error("Error creating escrow deposit:", err);
+      toast.error(`Error: ${err.message || err}`);
+      setDepositingAgreementId(null);
+    }
+  };
+
+  // 2. Release & withdraw escrowed funds to seller/payee (release)
+  const handleEscrowRelease = async (depositId: number) => {
+    if (!walletAddress) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+
+    try {
+      setReleasingDepositId(depositId);
+
+      writeContract({
+        address: EscrowAddress as `0x${string}`,
+        abi: escrowAbi,
+        functionName: "release",
+        args: [BigInt(depositId)]
+      }, {
+        onSuccess: () => {
+          toast.success(`Escrow funds released & withdrawn to seller successfully!`);
+          fetchPlayerDetails();
+          setReleasingDepositId(null);
+        },
+        onError: (err) => {
+          toast.error(`Escrow release failed: ${err.message || err}`);
+          setReleasingDepositId(null);
+        }
+      });
+    } catch (err: any) {
+      console.error("Error releasing escrow deposit:", err);
+      toast.error(`Error: ${err.message || err}`);
+      setReleasingDepositId(null);
+    }
+  };
+
+  // 3. Refund escrowed funds to buyer/payer (refund)
+  const handleEscrowRefund = async (depositId: number) => {
+    if (!walletAddress) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+
+    try {
+      setRefundingDepositId(depositId);
+
+      writeContract({
+        address: EscrowAddress as `0x${string}`,
+        abi: escrowAbi,
+        functionName: "refund",
+        args: [BigInt(depositId)]
+      }, {
+        onSuccess: () => {
+          toast.success(`Escrow funds refunded to buyer successfully!`);
+          fetchPlayerDetails();
+          setRefundingDepositId(null);
+        },
+        onError: (err) => {
+          toast.error(`Escrow refund failed: ${err.message || err}`);
+          setRefundingDepositId(null);
+        }
+      });
+    } catch (err: any) {
+      console.error("Error refunding escrow deposit:", err);
+      toast.error(`Error: ${err.message || err}`);
+      setRefundingDepositId(null);
+    }
+  };
+
+  const openEditMetadataModal = () => {
+    if (!player) return;
+    setEditName(player.name || "");
+    setEditPosition(player.position !== "N/A" ? player.position : "");
+    setEditAge(player.age !== null ? String(player.age) : "");
+    setEditNationality(player.nationality !== "N/A" ? player.nationality : "");
+    setEditImageURI(player.imageURI || "");
+    setEditMetadataURI(player.metadataURI || "");
+    setIsEditingMetadata(true);
+  };
+
+  const addLocalLog = (event: string, contract: string, details: string) => {
+    if (typeof window === "undefined") return;
+
+    const storedLogs = localStorage.getItem("tc_logs");
+    const currentLogs: any[] = storedLogs ? JSON.parse(storedLogs) : [];
+
+    const randomHash = "0x" + Math.random().toString(16).substring(2, 6) + "..." + Math.random().toString(16).substring(2, 6);
+    const blockNum = currentLogs.length > 0 ? currentLogs[0].block + Math.floor(Math.random() * 5) + 1 : 1550000;
+    const now = new Date().toISOString().replace("T", " ").substring(0, 16);
+
+    const newLog = {
+      id: `log-${Date.now()}`,
+      event,
+      contract,
+      block: blockNum,
+      hash: randomHash,
+      details,
+      timestamp: now,
+    };
+
+    localStorage.setItem("tc_logs", JSON.stringify([newLog, ...currentLogs]));
+    return newLog;
+  };
+
+  const handleEditImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingImage(true);
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload-ipfs", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Image upload failed");
+      }
+
+      const data = await res.json();
+      if (data.ipfsHash) {
+        const ipfsURL = `https://amethyst-patient-pheasant-516.mypinata.cloud/ipfs/${data.ipfsHash}`;
+        setEditImageURI(ipfsURL);
+        toast.success("Player portrait uploaded to IPFS successfully!");
+      } else {
+        toast.error("Upload failed: No IPFS hash returned.");
+      }
+    } catch (err: any) {
+      console.error("IPFS Image upload error:", err);
+      toast.error(`Image upload failed: ${err.message || err}`);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // Function mapping to PlayerRegistry.updatePlayerMetadata ABI
+  const handleUpdatePlayerMetadata = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!walletAddress || !player) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+
+    if (walletAddress.toLowerCase() !== player.owner.toLowerCase()) {
+      toast.error("Unauthorized: Only the player owner can update metadata.");
+      return;
+    }
+
+    setUpdatingMetadata(true);
+
+    try {
+      let finalMetadataURI = editMetadataURI.trim();
+
+      if (!useDirectURI) {
+        const metadataPayload = {
+          name: editName.trim() || player.name,
+          position: editPosition.trim() || player.position,
+          age: editAge ? Number(editAge) : player.age,
+          nationality: editNationality.trim() || player.nationality,
+          imageURI: editImageURI.trim() || player.imageURI,
+          status: player.status,
+          schema: "ipfs://bafkreidtransferchainplayer.json"
+        };
+
+        const uploadRes = await fetch("/api/upload-ipfs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(metadataPayload)
+        });
+
+        if (!uploadRes.ok) {
+          const errorData = await uploadRes.json();
+          throw new Error(errorData.error || "Metadata IPFS upload failed");
+        }
+
+        const uploadData = await uploadRes.json();
+        if (!uploadData.ipfsHash) {
+          throw new Error("No IPFS hash returned for metadata document.");
+        }
+
+        finalMetadataURI = `ipfs://${uploadData.ipfsHash}`;
+      }
+
+      if (!finalMetadataURI) {
+        throw new Error("Metadata URI cannot be empty.");
+      }
+
+      writeContract({
+        address: PlayerRegistryAddress as `0x${string}`,
+        abi: playerRegistryAbi,
+        functionName: "updatePlayerMetadata",
+        args: [player.owner as `0x${string}`, finalMetadataURI]
+      }, {
+        onSuccess: (txHash) => {
+          setUpdatingMetadata(false);
+          setIsEditingMetadata(false);
+
+          if (typeof window !== "undefined") {
+            const storedPlayers = localStorage.getItem("tc_players");
+            if (storedPlayers) {
+              const currentPlayers = JSON.parse(storedPlayers);
+              const updatedPlayers = currentPlayers.map((p: any) => {
+                if (p.id === player.id || (p.owner && p.owner.toLowerCase() === player.owner.toLowerCase())) {
+                  return {
+                    ...p,
+                    name: editName.trim() || p.name,
+                    position: editPosition.trim() || p.position,
+                    age: editAge ? Number(editAge) : p.age,
+                    nationality: editNationality.trim() || p.nationality,
+                    imageURI: editImageURI.trim() || p.imageURI,
+                    metadataURI: finalMetadataURI
+                  };
+                }
+                return p;
+              });
+            }
+
+          }
+
+          toast.success(`Player data updated successfully on PlayerRegistry!`);
+          fetchPlayerDetails();
+        },
+        onError: (err) => {
+          setUpdatingMetadata(false);
+          toast.error(`Failed to update data`);
+        }
+      });
+    } catch (err: any) {
+      console.error("Error updating player metadata:", err);
+      toast.error(`Metadata Update Error: ${err.message || err}`);
+      setUpdatingMetadata(false);
+    }
+  };
+
   const isPlayerOwner = walletAddress && player && walletAddress.toLowerCase() === player.owner.toLowerCase();
 
   return (
@@ -606,12 +1002,225 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
                   </div>
                 </div>
 
-                {/* Identity Ownership Information */}
-                <div className="bg-white border border-zinc-200 p-6 space-y-3 shadow-sm text-xs">
-                  <span className="text-zinc-400 font-extrabold uppercase text-[9px] tracking-wider block">Registrant Club Address</span>
-                  <div className="font-mono text-zinc-800 bg-zinc-50 border border-zinc-200 px-4 py-2.5 rounded break-all select-all font-bold">
-                    {player.owner}
+                {/* Identity Ownership & Metadata Information */}
+                <div className="bg-white border border-zinc-200 p-6 space-y-4 shadow-sm text-xs">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                      <span className="text-zinc-400 font-extrabold uppercase text-[9px] tracking-wider block">Registrant Club</span>
+                      <div className="font-extrabold text-zinc-900 text-base mt-1 flex flex-wrap items-center gap-2">
+                        {player.clubId ? (
+                          <Link href={`/clubs/view/${player.clubId}`} className="hover:text-[#dd1515] transition-colors flex items-center gap-1.5">
+                            🏰 {player.clubName}
+                          </Link>
+                        ) : (
+                          <span className="flex items-center gap-1.5">🏰 FC</span>
+                        )}
+                        
+                      </div>
+                    </div>
+                    {isPlayerOwner && !isEditingMetadata && (
+                      <button
+                        type="button"
+                        onClick={openEditMetadataModal}
+                        className="bg-zinc-900 hover:bg-[#dd1515] text-white text-[10px] font-extrabold uppercase tracking-wider px-4 py-2.5 rounded-sm transition-colors flex items-center gap-1.5 shrink-0"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit Player
+                      </button>
+                    )}
                   </div>
+
+                  {/* EDIT METADATA FORM CONTAINER */}
+                  {isPlayerOwner && isEditingMetadata && (
+                    <div className="mt-4 pt-4 border-t border-zinc-200 bg-zinc-50 p-5 rounded-sm space-y-4 animate-fade-in">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h4 className="font-black text-zinc-900 uppercase text-[11px] tracking-wide">
+                            Update Player Metadata (updatePlayerMetadata)
+                          </h4>
+                          <p className="text-zinc-500 text-[11px] mt-0.5">
+                            Modify player details on-chain via the PlayerRegistry smart contract.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingMetadata(false)}
+                          className="text-zinc-400 hover:text-zinc-600 font-bold text-xs"
+                        >
+                          ✕ Cancel
+                        </button>
+                      </div>
+
+                      <form onSubmit={handleUpdatePlayerMetadata} className="space-y-4">
+                        <div className="flex items-center gap-2 pb-1">
+                          <label className="text-[10px] text-zinc-600 font-bold cursor-pointer flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={useDirectURI}
+                              onChange={(e) => setUseDirectURI(e.target.checked)}
+                              className="rounded text-[#dd1515] focus:ring-[#dd1515]"
+                            />
+                            Use Direct Metadata IPFS URI (Advanced)
+                          </label>
+                        </div>
+
+                        {useDirectURI ? (
+                          <div>
+                            <label className="text-zinc-500 block font-bold text-[9px] uppercase pb-1">
+                              Custom Metadata URI (e.g. ipfs://Qm...)
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={editMetadataURI}
+                              onChange={(e) => setEditMetadataURI(e.target.value)}
+                              placeholder="ipfs://Qm..."
+                              className="bg-white border border-zinc-300 text-xs px-3 py-2.5 text-zinc-800 w-full focus:outline-none focus:border-[#dd1515] font-mono font-bold"
+                            />
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-zinc-500 block font-bold text-[9px] uppercase pb-1">Player Name</label>
+                              <input
+                                type="text"
+                                required
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                                placeholder="Full Name"
+                                className="bg-white border border-zinc-300 text-xs px-3 py-2 text-zinc-800 w-full focus:outline-none focus:border-[#dd1515] font-bold"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-zinc-500 block font-bold text-[9px] uppercase pb-1">Position</label>
+                              <select
+                                value={editPosition}
+                                onChange={(e) => setEditPosition(e.target.value)}
+                                className="bg-white border border-zinc-300 text-xs px-3 py-2 text-zinc-800 w-full focus:outline-none focus:border-[#dd1515] font-bold"
+                              >
+                                <option value="Goalkeeper (GK)">Goalkeeper (GK)</option>
+                                <option value="Centre-Back (CB)">Centre-Back (CB)</option>
+                                <option value="Left-Back (LB)">Left-Back (LB)</option>
+                                <option value="Right-Back (RB)">Right-Back (RB)</option>
+                                <option value="Defensive Midfield (CDM)">Defensive Midfield (CDM)</option>
+                                <option value="Central Midfield (CM)">Central Midfield (CM)</option>
+                                <option value="Attacking Midfield (CAM)">Attacking Midfield (CAM)</option>
+                                <option value="Left Wing (LW)">Left Wing (LW)</option>
+                                <option value="Right Wing (RW)">Right Wing (RW)</option>
+                                <option value="Striker (ST)">Striker (ST)</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-zinc-500 block font-bold text-[9px] uppercase pb-1">Age</label>
+                              <input
+                                type="number"
+                                required
+                                value={editAge}
+                                onChange={(e) => setEditAge(e.target.value)}
+                                placeholder="Age in years"
+                                className="bg-white border border-zinc-300 text-xs px-3 py-2 text-zinc-800 w-full focus:outline-none focus:border-[#dd1515] font-bold"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-zinc-500 block font-bold text-[9px] uppercase pb-1">Nationality</label>
+                              <input
+                                type="text"
+                                required
+                                value={editNationality}
+                                onChange={(e) => setEditNationality(e.target.value)}
+                                placeholder="e.g. England, Argentina"
+                                className="bg-white border border-zinc-300 text-xs px-3 py-2 text-zinc-800 w-full focus:outline-none focus:border-[#dd1515] font-bold"
+                              />
+                            </div>
+                            <div className="sm:col-span-2 space-y-2">
+                              <label className="text-zinc-500 block font-bold text-[9px] uppercase">
+                                Player Portrait / Image
+                              </label>
+
+                              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                                {/* Image Preview Thumbnail */}
+                                <div className="w-16 h-16 bg-zinc-200 border border-zinc-300 rounded-sm overflow-hidden shrink-0 relative">
+                                  {editImageURI ? (
+                                    <img
+                                      src={editImageURI}
+                                      alt="Preview"
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        (e.target as HTMLElement).style.display = "none";
+                                      }}
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-zinc-400 text-[9px] font-bold">
+                                      No Image
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="flex-1 space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <label className="bg-zinc-900 hover:bg-[#dd1515] text-white text-[10px] font-extrabold uppercase tracking-wider px-3 py-2 rounded-sm cursor-pointer transition-colors inline-flex items-center gap-1.5 shrink-0">
+                                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                      </svg>
+                                      Upload New Image File
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleEditImageUpload}
+                                        disabled={uploadingImage}
+                                        className="hidden"
+                                      />
+                                    </label>
+                                    {uploadingImage && (
+                                      <span className="text-[10px] text-zinc-500 font-mono flex items-center gap-1 animate-pulse">
+                                        <div className="w-3 h-3 border-2 border-zinc-400 border-t-[#dd1515] rounded-full animate-spin" />
+                                        Uploading to IPFS...
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <input
+                                    type="text"
+                                    required
+                                    value={editImageURI}
+                                    onChange={(e) => setEditImageURI(e.target.value)}
+                                    placeholder="https://... or ipfs://..."
+                                    className="bg-white border border-zinc-300 text-xs px-3 py-2 text-zinc-800 w-full focus:outline-none focus:border-[#dd1515] font-mono text-[11px]"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex justify-end gap-3 pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingMetadata(false)}
+                            className="bg-zinc-200 hover:bg-zinc-300 text-zinc-800 font-extrabold text-[10px] uppercase tracking-wider px-4 py-2.5 rounded-sm transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={updatingMetadata}
+                            className="bg-[#dd1515] hover:bg-zinc-900 text-white font-extrabold text-[10px] uppercase tracking-wider px-6 py-2.5 rounded-sm transition-colors flex items-center gap-2"
+                          >
+                            {updatingMetadata ? (
+                              <>
+                                <div className="w-3.5 h-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                Updating On-Chain...
+                              </>
+                            ) : (
+                              "Save & Update PlayerMetadata"
+                            )}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
                 </div>
 
                 {/* Marketplace Escrow / Offer Options */}
@@ -814,8 +1423,6 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
                                     </div>
                                   </div>
 
-                                  
-
                                   {/* Action Buttons for Buyer if agreement is in Draft status */}
                                   {isBuyer && agreement.status === 0 && (
                                     <div className="flex gap-2 pt-2">
@@ -835,6 +1442,123 @@ export default function PlayerPage({ params }: { params: Promise<{ id: string }>
                                       </button>
                                     </div>
                                   )}
+
+                                  {/* ESCROW SETTLEMENT SECTION (Escrow.sol) */}
+                                  <div className="mt-3 pt-3 border-t border-zinc-200 space-y-3">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                      <span className="font-extrabold text-[10px] text-zinc-900 uppercase tracking-wider flex items-center gap-1.5">
+                                        🔒 Escrow Settlement
+                                      </span>
+                                      {agreement.deposits && agreement.deposits.length > 0 ? (
+                                        <span className="text-[9px] font-extrabold uppercase bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2 py-0.5 rounded">
+                                          On-Chain Escrow Deposit Active ({agreement.deposits.length})
+                                        </span>
+                                      ) : (
+                                        <span className="text-[9px] font-mono text-zinc-400 uppercase">
+                                          No On-Chain Escrow Deposit Found
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {/* Display Existing Escrow Deposits fetched via getDeposit */}
+                                    {agreement.deposits && agreement.deposits.length > 0 && (
+                                      <div className="space-y-2">
+                                        {agreement.deposits.map((dep) => {
+                                          const isDepPayer = walletAddress && walletAddress.toLowerCase() === dep.payer.toLowerCase();
+                                          const isDepPayee = walletAddress && walletAddress.toLowerCase() === dep.payee.toLowerCase();
+
+                                          const depStatusLabel = 
+                                            dep.status === 0 ? "Created" :
+                                            dep.status === 1 ? "Funded (Escrow Active)" :
+                                            dep.status === 2 ? "Released (Withdrawn)" :
+                                            dep.status === 3 ? "Refunded" : "Disputed";
+
+                                          const depStatusBadge = 
+                                            dep.status === 1 ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30 font-bold" :
+                                            dep.status === 2 ? "bg-blue-500/10 text-blue-600 border border-blue-500/30 font-bold" :
+                                            dep.status === 3 ? "bg-amber-500/10 text-amber-600 border border-amber-500/30 font-bold" :
+                                            "bg-zinc-500/10 text-zinc-600 border border-zinc-500/30";
+
+                                          return (
+                                            <div key={dep.id} className="bg-white border border-zinc-200 p-3.5 rounded-sm space-y-2 text-xs shadow-sm">
+                                              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                                                <span className="font-mono text-zinc-800 font-extrabold text-[11px]">
+                                                  Deposit #{dep.id} — {Number(dep.amount).toLocaleString()} USDC
+                                                </span>
+                                                <span className={`text-[9px] uppercase px-2 py-0.5 rounded ${depStatusBadge}`}>
+                                                  {depStatusLabel}
+                                                </span>
+                                              </div>
+
+                                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] font-mono text-zinc-500 bg-zinc-50 p-2 rounded border border-zinc-150">
+                                                <div><span className="text-zinc-400 uppercase font-bold">Payer:</span> {dep.payer.substring(0, 8)}...{dep.payer.substring(dep.payer.length - 6)}</div>
+                                                <div><span className="text-zinc-400 uppercase font-bold">Payee:</span> {dep.payee.substring(0, 8)}...{dep.payee.substring(dep.payee.length - 6)}</div>
+                                              </div>
+
+                                              {/* Action Buttons for Funded Escrow Deposit */}
+                                              {dep.status === 1 && (
+                                                <div className="flex flex-wrap gap-2 pt-1 border-t border-zinc-150">
+                                                  {/* Seller / Payee withdraw (release) button */}
+                                                  {isDepPayee && (
+                                                    <button
+                                                      onClick={() => handleEscrowRelease(dep.id)}
+                                                      disabled={releasingDepositId === dep.id}
+                                                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[10px] uppercase tracking-wider px-4 py-2 rounded-sm transition-colors flex items-center gap-1.5"
+                                                    >
+                                                      {releasingDepositId === dep.id ? (
+                                                        <>
+                                                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                          Withdrawing...
+                                                        </>
+                                                      ) : (
+                                                        "💸 Withdraw / Release Funds"
+                                                      )}
+                                                    </button>
+                                                  )}
+
+                                                  {/* Buyer / Payer refund button */}
+                                                  {isDepPayer && (
+                                                    <button
+                                                      onClick={() => handleEscrowRefund(dep.id)}
+                                                      disabled={refundingDepositId === dep.id}
+                                                      className="bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-[10px] uppercase tracking-wider px-4 py-2 rounded-sm transition-colors flex items-center gap-1.5"
+                                                    >
+                                                      {refundingDepositId === dep.id ? (
+                                                        <>
+                                                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                          Refunding...
+                                                        </>
+                                                      ) : (
+                                                        "↩ Request Refund"
+                                                      )}
+                                                    </button>
+                                                  )}
+                                                </div>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+
+                                    {/* Action to create and fund a new Escrow deposit */}
+                                    <div className="pt-1">
+                                      <button
+                                        onClick={() => handleEscrowDeposit(agreement.id, agreement.seller, agreement.clauses.transferFee)}
+                                        disabled={depositingAgreementId === agreement.id}
+                                        className="bg-zinc-900 hover:bg-[#dd1515] text-white font-extrabold text-[10px] uppercase tracking-wider px-4 py-2.5 rounded-sm transition-colors flex items-center gap-1.5 w-full justify-center"
+                                      >
+                                        {depositingAgreementId === agreement.id ? (
+                                          <>
+                                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            Funding Escrow Deposit...
+                                          </>
+                                        ) : (
+                                          `📥 Deposit ${Number(agreement.clauses.transferFee).toLocaleString()} USDC to Escrow`
+                                        )}
+                                      </button>
+                                    </div>
+                                  </div>
                                 </div>
                               );
                             })}
