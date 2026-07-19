@@ -2,6 +2,7 @@
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import WorldCupFixtures from "@/components/WorldCupFixtures";
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useAccount } from "wagmi";
@@ -59,15 +60,6 @@ interface Offer {
   createdAt: string;
 }
 
-interface TxLog {
-  id: string;
-  event: string;
-  contract: string;
-  block: number;
-  hash: string;
-  details: string;
-  timestamp: string;
-}
 
 export default function Home() {
   // World Cup Loader States
@@ -284,9 +276,6 @@ export default function Home() {
 
   const [isMounted, setIsMounted] = useState(false);
 
-  
-  
-  
   // Helper to trigger UI success notifications
   const triggerNotification = (msg: string) => {
     toast.success(msg);
@@ -692,12 +681,9 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid lg:grid-cols-12 gap-12">
             
-            {/* Left 8 Columns: Transaction & Event Logs */}
-            <div className="lg:col-span-8 space-y-8">
-              <div className="border-l-4 border-[#dd1515] pl-4">
-                <span className="text-xs font-extrabold text-[#dd1515] tracking-widest uppercase">Audit Trail</span>
-                <h2 className="text-2xl font-black text-zinc-950 uppercase tracking-tight">On-Chain Registry Logs</h2>
-              </div>
+            {/* Left 8 Columns: Live World Cup Standings & On-Chain Audit Trail Component */}
+            <div className="lg:col-span-8">
+              <WorldCupFixtures />
             </div>
 
             {/* Right 4 Columns: Verified Clubs (Points Table style: Light theme standings table) */}
