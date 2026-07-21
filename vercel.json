@@ -1,0 +1,6 @@
+{
+  "installCommand": "cd TransferChain-frontend && npm install",
+  "buildCommand": "cd TransferChain-frontend && npm run build",
+  "outputDirectory": "TransferChain-frontend/.next",
+  "framework": "nextjs"
+}
